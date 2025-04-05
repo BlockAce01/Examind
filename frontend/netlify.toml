@@ -1,0 +1,8 @@
+# examind-frontend/netlify.toml
+[build]
+  command = "npm run build" # The build command
+  publish = ".next"         # The directory containing the build output
+
+# This plugin is essential for Next.js features on Netlify (SSR, ISR, Image Optimization, etc.)
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
