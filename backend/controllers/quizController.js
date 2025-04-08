@@ -1,4 +1,4 @@
-// examind-backend\controllers\quizController.js
+// backend\controllers\quizController.js
 const db = require('../config/db');
 
 // Get All Quizzes (including question count)

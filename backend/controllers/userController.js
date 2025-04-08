@@ -1,4 +1,4 @@
-// examind-backend/controllers/userController.js
+// backend/controllers/userController.js
 const db = require('../config/db');
 // Note: Don't include password logic here unless explicitly changing it,
 // which requires more security considerations. Focus on role/details update.

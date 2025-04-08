@@ -1,4 +1,4 @@
-// examind-backend/controllers/discussionController.js
+// backend/controllers/discussionController.js
 const db = require('../config/db');
 
 // Get All Forum Topics

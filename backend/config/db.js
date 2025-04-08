@@ -1,4 +1,4 @@
-// examind-backend/config/db.js
+// backend/config/db.js
 const { Pool } = require('pg');
 require('dotenv').config(); // Ensure environment variables are loaded
 

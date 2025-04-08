@@ -1,4 +1,4 @@
-// examind-backend/routes/discussionRoutes.js
+// backend/routes/discussionRoutes.js
 const express = require('express');
 const router = express.Router();
 const discussionController = require('../controllers/discussionController.js'); // Create next

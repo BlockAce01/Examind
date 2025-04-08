@@ -1,4 +1,4 @@
-// examind-backend/controllers/resourceController.js
+// backend/controllers/resourceController.js
 const db = require('../config/db');
 
 // Get All Resources (with potential filtering)

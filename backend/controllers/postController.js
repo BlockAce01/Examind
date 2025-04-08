@@ -1,4 +1,4 @@
-// examind-backend/controllers/postController.js
+// backend/controllers/postController.js
 const db = require('../config/db');
 
 // Get Posts for a Specific Forum

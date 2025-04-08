@@ -1,4 +1,4 @@
-// examind-backend/routes/resourceRoutes.js
+// backend/routes/resourceRoutes.js
 const express = require('express');
 const router = express.Router();
 const resourceController = require('../controllers/resourceController'); // Create next

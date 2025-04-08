@@ -1,4 +1,4 @@
-// examind-backend/controllers/authController.js
+// backend/controllers/authController.js
 const db = require('../config/db'); // Our database query function
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
