@@ -16,18 +16,20 @@ export default function HomePage() {
       <div className="space-x-4">
         {/* Link to your Login page */}
         <Link href="/login">
-          <Button variant="primary" size="lg"> {/* Assuming Button accepts size prop */}
-            Login
+          {/* Remove the size="lg" prop */}
+          <Button variant="primary">
+             Login
           </Button>
         </Link>
-         {/* Link to your Register page */}
+
+        {/* Link to your Register page */}
         <Link href="/register">
-          <Button variant="secondary" size="lg">
+          {/* Remove the size="lg" prop */}
+          <Button variant="secondary">
             Register
           </Button>
         </Link>
       </div>
-      {/* You can add more sections here later - features, testimonials etc. */}
     </div>
   );
 }
