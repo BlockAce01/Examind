@@ -8,8 +8,9 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Spinner from '@/components/ui/Spinner';
 import { useAuth } from '@/context/AuthContext';
-// Use the detailed Quiz type which might include questions, even if not edited here
-import { type QuizDetail } from '@/types/quiz';
+import { type QuizDetail, type Question } from '@/types/quiz'; // Use shared types
+import QuestionForm from '@/components/admin/quiz/QuestionForm'; // Import QuestionForm
+import { PencilSquareIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 const difficultyLevels = ['Easy', 'Medium', 'Hard'] as const;
 type DifficultyLevelType = typeof difficultyLevels[number];
@@ -19,84 +20,97 @@ export default function EditQuizPage() {
     const params = useParams();
     const { token } = useAuth();
     const quizId = params.quizId as string;
+    const quizIdNum = parseInt(quizId, 10);
 
-    // Form State
+    // --- State ---
+    // Quiz Details Form
     const [title, setTitle] = useState('');
     const [subject, setSubject] = useState('');
     const [difficultyLevel, setDifficultyLevel] = useState<DifficultyLevelType | ''>('');
     const [timeLimit, setTimeLimit] = useState<number | ''>('');
-    // State to hold fetched questions (display only for now)
-    const [questions, setQuestions] = useState<any[]>([]); // Use specific Question type if defined
+    const [isUpdatingQuiz, setIsUpdatingQuiz] = useState(false); // Loading state for quiz detail update
+    const [quizDetailError, setQuizDetailError] = useState<string | null>(null); // Error for quiz detail update
+    const [quizFieldErrors, setQuizFieldErrors] = useState<{ [key: string]: string }>({});
 
-    // Loading and Error State
+    // Question Management
+    const [questions, setQuestions] = useState<Question[]>([]);
+    const [showQuestionForm, setShowQuestionForm] = useState(false);
+    const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+    const [isSavingQuestion, setIsSavingQuestion] = useState(false); // Loading state for question save/update
+    const [questionError, setQuestionError] = useState<string | null>(null); // Error for question actions
+
+    // General Loading/Error for initial fetch
     const [isLoadingData, setIsLoadingData] = useState(true);
-    const [isUpdating, setIsUpdating] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
+    const [fetchError, setFetchError] = useState<string | null>(null);
 
-    // --- Fetch Existing Quiz Data (including questions) ---
-    useEffect(() => {
-        if (!quizId || !token) {
-            if (!token) setError("Authentication required.");
+    // --- Fetch Existing Quiz Data ---
+    const fetchQuizData = async () => {
+        // Added isNaN check for quizIdNum
+        if (!quizIdNum || isNaN(quizIdNum) || !token) {
+            if (!token) setFetchError("Authentication required.");
+            else setFetchError("Invalid Quiz ID.");
             setIsLoadingData(false);
             return;
         }
+        console.log(`Fetching data for quiz ID: ${quizIdNum}`);
+        setIsLoadingData(true);
+        setFetchError(null); // Clear previous fetch errors
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+            const response = await fetch(`${apiUrl}/api/v1/quizzes/${quizIdNum}`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            // Check specific status codes for better error handling
+            if (response.status === 404) throw new Error('Quiz not found.');
+            if (!response.ok) throw new Error(`Error fetching quiz details. Status: ${response.status}`);
 
-        const fetchQuiz = async () => {
-            setIsLoadingData(true);
-            setError(null);
-            try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-                // Fetch the detailed quiz data including questions
-                const response = await fetch(`${apiUrl}/api/v1/quizzes/${quizId}`, {
-                    headers: { 'Authorization': `Bearer ${token}` },
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.message || `Quiz not found or permission denied. Status: ${response.status}`);
-                }
-                const data = await response.json();
-
-                if (data.status === 'success' && data.data?.quiz) {
-                    const fetchedQuiz: QuizDetail = data.data.quiz; // Use detailed type
-                    // Populate form state
-                    setTitle(fetchedQuiz.Title || '');
-                    setSubject(fetchedQuiz.Subject || '');
-                    setDifficultyLevel(fetchedQuiz.DifficultyLevel || '');
-                    setTimeLimit(fetchedQuiz.TimeLimit ?? '');
-                    setQuestions(fetchedQuiz.questions || []); // Store fetched questions
-                } else {
-                    throw new Error('Invalid data format received from API.');
-                }
-            } catch (err: any) {
-                setError(err.message);
-            } finally {
-                setIsLoadingData(false);
+            const data = await response.json();
+            if (data.status === 'success' && data.data?.quiz) {
+                const fetchedQuiz: QuizDetail = data.data.quiz;
+                setTitle(fetchedQuiz.Title || '');
+                setSubject(fetchedQuiz.Subject || '');
+                setDifficultyLevel(fetchedQuiz.DifficultyLevel || '');
+                setTimeLimit(fetchedQuiz.TimeLimit ?? '');
+                setQuestions(fetchedQuiz.questions || []); // Ensure questions array exists
+                console.log("Fetched data successfully, questions:", fetchedQuiz.questions);
+            } else {
+                throw new Error(data.message || 'Invalid data format received.');
             }
-        };
-        fetchQuiz();
-    }, [quizId, token]);
+        } catch (err: any) {
+            setFetchError(err.message);
+            console.error("Fetch quiz error:", err);
+        } finally {
+            setIsLoadingData(false);
+        }
+    };
 
-    // --- Handle Form Submission (Update Quiz Details) ---
-    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        if (!token) return; // Should be handled by initial check/redirect
+    useEffect(() => {
+        fetchQuizData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [quizIdNum, token]); // Depend on numeric ID and token
 
-        setIsUpdating(true);
-        setError(null);
-        setFieldErrors({});
+    // --- Handle Quiz Detail Update ---
+    const handleQuizDetailSubmit = async (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault(); // Prevent default form submission
+        if (!token) {
+            setQuizDetailError("Authentication required."); // Set specific error
+            return;
+        }
+
+        setIsUpdatingQuiz(true); // Use specific loading state
+        setQuizDetailError(null); // Clear specific error
+        setQuizFieldErrors({});
 
         // Validation
         let currentErrors: { [key: string]: string } = {};
         if (!title.trim()) currentErrors.title = 'Title is required.';
         if (!subject.trim()) currentErrors.subject = 'Subject is required.';
         if (!difficultyLevel) currentErrors.difficulty = 'Difficulty level is required.';
-        if (timeLimit === '' || timeLimit <= 0) currentErrors.timeLimit = 'Valid time limit is required.';
+        if (timeLimit === '' || timeLimit <= 0) currentErrors.timeLimit = 'Valid time limit (minutes) is required.';
 
         if (Object.keys(currentErrors).length > 0) {
-            setFieldErrors(currentErrors);
-            setIsUpdating(false);
+            setQuizFieldErrors(currentErrors);
+            setIsUpdatingQuiz(false);
             return;
         }
 
@@ -110,7 +124,7 @@ export default function EditQuizPage() {
 
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-            const response = await fetch(`${apiUrl}/api/v1/quizzes/${quizId}`, {
+            const response = await fetch(`${apiUrl}/api/v1/quizzes/${quizIdNum}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -118,21 +132,123 @@ export default function EditQuizPage() {
                 },
                 body: JSON.stringify(updatedQuizData),
             });
-            const data = await response.json();
+            const data = await response.json(); // Always try to parse JSON
             if (!response.ok) {
                 throw new Error(data.message || `HTTP error! status: ${response.status}`);
             }
             alert('Quiz details updated successfully!');
-            router.push('/admin/quizzes');
+            // Optionally refetch data if needed, but usually not necessary if API returns updated object
+            // fetchQuizData();
         } catch (err: any) {
-            setError(err.message || 'Failed to update quiz details.');
+            setQuizDetailError(err.message || 'Failed to update quiz details.'); // Set specific error state
+            console.error("Quiz Detail Update Error:", err);
         } finally {
-            setIsUpdating(false);
+            setIsUpdatingQuiz(false); // Use specific loading state
         }
     };
 
-    if (isLoadingData) { /* ... render spinner ... */ }
-    if (error && !title) { /* ... render fetch error ... */ }
+    // --- Question Action Handlers ---
+    const handleSaveQuestion = async (questionData: Partial<Question>) => {
+        if (!token || !quizIdNum) return;
+        setIsSavingQuestion(true);
+        setQuestionError(null);
+        const isEditing = !!questionData.QuestionID;
+        const method = isEditing ? 'PUT' : 'POST';
+        const questionId = questionData.QuestionID;
+        const apiUrlBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        let url = `${apiUrlBase}/api/v1/quizzes/${quizIdNum}/questions`;
+        if (isEditing && questionId) { url += `/${questionId}`; }
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ // Ensure keys match backend expectation
+                    Text: questionData.Text,
+                    Options: questionData.Options,
+                    CorrectAnswerIndex: questionData.CorrectAnswerIndex
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message || `Failed to ${isEditing ? 'update' : 'add'} question`);
+
+            // Update local state
+            fetchQuizData(); // Refetch quiz data to get updated question list & count reliably
+
+            // Close form
+            setShowQuestionForm(false);
+            setEditingQuestion(null);
+            alert(`Question ${isEditing ? 'updated' : 'added'} successfully!`);
+
+        } catch (err: any) {
+            setQuestionError(err.message);
+            console.error("Save Question Error:", err);
+             alert(`Error saving question: ${err.message}`);
+        } finally {
+            setIsSavingQuestion(false);
+        }
+    };
+
+    const handleDeleteQuestion = async (questionIdToDelete: number, questionText: string) => {
+        if (!token || !quizIdNum) return;
+        if (window.confirm(`Delete question: "${questionText.substring(0, 50)}..."?`)) {
+            setQuestionError(null);
+            // Optionally set a specific loading state for this delete action if needed
+            try {
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+                const response = await fetch(`${apiUrl}/api/v1/quizzes/${quizIdNum}/questions/${questionIdToDelete}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                });
+                if (response.status === 204) {
+                    // Update local state - More reliable to refetch
+                    fetchQuizData();
+                    alert('Question deleted successfully.');
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || `Failed to delete. Status: ${response.status}`);
+                }
+            } catch (err: any) {
+                setQuestionError(err.message);
+                console.error("Delete Question Error:", err);
+                alert(`Error deleting question: ${err.message}`);
+            }
+        }
+    };
+
+    const handleAddNewQuestionClick = () => {
+        setEditingQuestion(null);
+        setShowQuestionForm(true);
+        setQuestionError(null);
+    };
+
+    const handleEditQuestionClick = (question: Question) => {
+        setEditingQuestion(question);
+        setShowQuestionForm(true);
+        setQuestionError(null);
+    };
+
+    const handleCancelQuestionForm = () => {
+        setShowQuestionForm(false);
+        setEditingQuestion(null);
+        setQuestionError(null);
+    };
+
+    // --- Render Logic ---
+    if (isLoadingData) {
+        return <div className="flex justify-center p-10"><Spinner size="lg" /></div>;
+    }
+    // Show fetch error more prominently if initial data failed to load
+    if (fetchError) {
+         return (
+              <div className="text-center p-10 text-red-600 bg-red-50 border border-red-200 rounded-lg">
+                  <p><strong>Error loading quiz:</strong> {fetchError}</p>
+                   <Link href="/admin/quizzes" className="block mt-4">
+                       <Button variant="secondary">Back to Quizzes</Button>
+                   </Link>
+              </div>
+         );
+     }
 
     return (
         <div>
@@ -142,67 +258,96 @@ export default function EditQuizPage() {
             <h1 className="text-2xl font-bold mb-6 text-gray-800">Edit Quiz (ID: {quizId})</h1>
 
             {/* --- Edit Quiz Details Form --- */}
-            <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md border border-gray-200 space-y-4 mb-8">
+            {/* Ensure this form uses handleQuizDetailSubmit */}
+            <form onSubmit={handleQuizDetailSubmit} className="bg-white p-6 rounded-lg shadow-md border border-gray-200 space-y-4 mb-8">
                 <h2 className="text-lg font-semibold border-b pb-2 mb-4">Quiz Details</h2>
-                {error && ( /* Display submit error */
-                    <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
-                        {error}
+                {/* Display quiz detail update errors */}
+                {quizDetailError && (
+                    <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+                        {quizDetailError}
                     </div>
                 )}
-                <Input label="Title" id="title" name="title" required value={title} onChange={(e) => setTitle(e.target.value)} disabled={isUpdating} error={fieldErrors.title} />
-                <Input label="Subject" id="subject" name="subject" required value={subject} onChange={(e) => setSubject(e.target.value)} disabled={isUpdating} error={fieldErrors.subject} />
-                {/* Select for Difficulty Level */}
-                <div className="mb-3">
+                {/* Inputs for quiz details */}
+                <Input label="Title" id="title" name="title" required value={title} onChange={(e) => setTitle(e.target.value)} disabled={isUpdatingQuiz} error={quizFieldErrors.title} />
+                <Input label="Subject" id="subject" name="subject" required value={subject} onChange={(e) => setSubject(e.target.value)} disabled={isUpdatingQuiz} error={quizFieldErrors.subject} />
+                <div className="mb-3"> {/* Select for Difficulty */}
                     <label htmlFor="difficultyLevel" className="block text-gray-700 text-sm font-bold mb-2">Difficulty Level</label>
-                    <select
-                        id="difficultyLevel" name="difficultyLevel" required
-                        value={difficultyLevel} onChange={(e) => setDifficultyLevel(e.target.value as DifficultyLevelType)}
-                        disabled={isUpdating}
-                        className={`shadow border ${fieldErrors.difficulty ? 'border-red-500' : 'border-gray-300'} rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 ${fieldErrors.difficulty ? 'focus:ring-red-300' : 'focus:ring-blue-500'} focus:border-transparent bg-white`}
-                        aria-describedby={fieldErrors.difficulty ? `difficulty-error` : undefined}
-                    >
-                        <option value="" disabled>Select difficulty...</option>
-                        {difficultyLevels.map(level => <option key={level} value={level}>{level}</option>)}
-                    </select>
-                     <div className="h-4 mt-1">
-                        {fieldErrors.difficulty && <p id="difficulty-error" className="text-xs text-red-600">{fieldErrors.difficulty}</p>}
-                    </div>
-                </div>
-                 <Input label="Time Limit (minutes)" id="timeLimit" name="timeLimit" type="number" required value={timeLimit} onChange={(e) => setTimeLimit(e.target.value === '' ? '' : parseInt(e.target.value, 10))} disabled={isUpdating} error={fieldErrors.timeLimit} />
+                    <select id="difficultyLevel" name="difficultyLevel" required value={difficultyLevel} onChange={(e) => setDifficultyLevel(e.target.value as DifficultyLevelType)} disabled={isUpdatingQuiz} className={`shadow border ${quizFieldErrors.difficulty ? 'border-red-500' : 'border-gray-300'} rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 ${quizFieldErrors.difficulty ? 'focus:ring-red-300' : 'focus:ring-blue-500'} focus:border-transparent bg-white`} aria-describedby={quizFieldErrors.difficulty ? `difficulty-error` : undefined}>
+                         <option value="" disabled>Select difficulty...</option>
+                         {difficultyLevels.map(level => <option key={level} value={level}>{level}</option>)}
+                     </select>
+                     <div className="h-4 mt-1">{quizFieldErrors.difficulty && <p id="difficulty-error" className="text-xs text-red-600">{quizFieldErrors.difficulty}</p>}</div>
+                 </div>
+                 <Input label="Time Limit (minutes)" id="timeLimit" name="timeLimit" type="number" required value={timeLimit} onChange={(e) => setTimeLimit(e.target.value === '' ? '' : parseInt(e.target.value, 10))} disabled={isUpdatingQuiz} error={quizFieldErrors.timeLimit} />
 
                 {/* Submit/Cancel Buttons for Quiz Details */}
                 <div className="flex justify-end gap-4 pt-4 border-t border-gray-200">
                     <Link href="/admin/quizzes">
-                        <Button type="button" variant="secondary" disabled={isUpdating}>Cancel</Button>
+                        <Button type="button" variant="secondary" disabled={isUpdatingQuiz}>Cancel Changes</Button>
                     </Link>
-                    <Button type="submit" variant="primary" disabled={isUpdating}>
-                        {isUpdating ? <Spinner size="sm" className="mx-auto" /> : 'Update Quiz Details'}
+                    <Button type="submit" variant="primary" disabled={isUpdatingQuiz}>
+                        {isUpdatingQuiz ? <Spinner size="sm" className="mx-auto" /> : 'Update Quiz Details'}
                     </Button>
                 </div>
             </form>
 
-            {/* --- Manage Questions Section (Placeholder) --- */}
+            {/* --- Manage Questions Section --- */}
             <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200 space-y-4">
-                 <h2 className="text-lg font-semibold border-b pb-2 mb-4">Manage Questions ({questions.length})</h2>
-                 <p className="text-sm text-gray-500">
-                     (Question management UI needs to be built here. This would involve displaying existing questions,
-                     providing forms to add new questions, edit existing ones, and delete questions, along with separate API calls.)
-                 </p>
-                 {/* Example: List existing questions */}
-                 {questions.length > 0 && (
-                     <ul className="space-y-2 text-sm">
-                         {questions.map((q, index) => (
-                             <li key={q.QuestionID || index} className="p-2 border rounded bg-gray-50">
-                                 {index + 1}. {q.Text} {/* Adjust property casing if needed */}
-                                 {/* Add Edit/Delete buttons here later */}
-                             </li>
-                         ))}
-                     </ul>
+                 <div className="flex justify-between items-center border-b pb-2 mb-4">
+                    <h2 className="text-lg font-semibold">Manage Questions ({questions.length})</h2>
+                     {!showQuestionForm && (
+                        <Button variant='secondary' size='sm' onClick={handleAddNewQuestionClick} disabled={isSavingQuestion}>
+                            <PlusIcon className="w-4 h-4 mr-1 inline-block"/> Add Question
+                        </Button>
+                     )}
+                 </div>
+
+                {/* Conditionally render the Question Form */}
+                {showQuestionForm && (
+                    <QuestionForm
+                        quizId={quizIdNum}
+                        initialData={editingQuestion}
+                        onSave={handleSaveQuestion} // Ensure this uses handleSaveQuestion
+                        onCancel={handleCancelQuestionForm}
+                        isSaving={isSavingQuestion}
+                    />
+                )}
+                {/* Display question action errors */}
+                 {questionError && !showQuestionForm && (
+                    <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+                        Error handling question: {questionError}
+                    </div>
                  )}
-                 {/* Button to trigger adding a new question form/modal */}
-                  <div className="text-right">
-                      <Button type="button" variant='secondary' > + Add Question</Button>
-                  </div>
+
+                {/* List of Existing Questions */}
+                 <div className="space-y-3">
+                     {questions.length > 0 ? (
+                         questions.map((q, index) => (
+                             <div key={q.QuestionID} className="flex justify-between items-start p-3 border rounded bg-gray-50">
+                                <div className="text-sm flex-grow mr-4"> {/* Added mr-4 */}
+                                     <p className="font-medium">{index + 1}. {q.Text}</p>
+                                     <ul className="list-disc list-inside pl-4 mt-1 text-xs text-gray-600">
+                                         {q.Options?.map((opt, optIndex) => (
+                                             <li key={optIndex} className={optIndex === q.CorrectAnswerIndex ? 'font-semibold text-green-700' : ''}>
+                                                 {opt} {optIndex === q.CorrectAnswerIndex ? '(Correct)' : ''}
+                                             </li>
+                                         ))}
+                                     </ul>
+                                 </div>
+                                 <div className="flex-shrink-0 space-x-2"> {/* Removed ml-4 */}
+                                     <Button variant="secondary" size="sm" className="px-2 py-1 text-xs" onClick={() => handleEditQuestionClick(q)} title="Edit Question" disabled={showQuestionForm}> {/* Disable if form open */}
+                                         <PencilSquareIcon className="w-4 h-4"/>
+                                     </Button>
+                                     <Button variant="danger" size="sm" className="px-2 py-1 text-xs" onClick={() => handleDeleteQuestion(q.QuestionID, q.Text)} title="Delete Question" disabled={showQuestionForm}> {/* Disable if form open */}
+                                         <TrashIcon className="w-4 h-4"/>
+                                     </Button>
+                                 </div>
+                             </div>
+                         ))
+                     ) : (
+                          !showQuestionForm && <p className="text-sm text-gray-500 text-center py-4">No questions added to this quiz yet.</p>
+                     )}
+                 </div>
             </div>
         </div>
     );

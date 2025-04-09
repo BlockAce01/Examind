@@ -1,10 +1,12 @@
 // src/types/quiz.ts
+
+// Ensure this Question type matches data from GET /quizzes/:id and the question CRUD endpoints
 export interface Question {
     QuestionID: number;
+    QuizID?: number; // Might be returned by backend, useful sometimes
     Text: string;
     Options: string[];
     CorrectAnswerIndex: number;
-    // Add QuizID if needed directly on question for some reason
 }
 
 // Type for Quiz data fetched from API list endpoint
