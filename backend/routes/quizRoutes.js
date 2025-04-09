@@ -1,29 +1,34 @@
+// examind-backend/routes/quizRoutes.js
 const express = require('express');
 const router = express.Router();
-const quizController = require('../controllers/quizController'); // Create next
+const quizController = require('../controllers/quizController');
+// Import question controller logic (we can place it in quizController for simplicity, or a new file)
+const questionController = require('../controllers/quizController'); // Or require('../controllers/questionController') if separated
+
 // const { protect, restrictTo } = require('../middleware/authMiddleware'); // TODO: Add later
 
-// GET /api/v1/quizzes - Get all quizzes (public)
+// --- Quiz Routes ---
 router.get('/', quizController.getAllQuizzes);
-
-// GET /api/v1/quizzes/:id - Get a single quiz with its questions (public)
 router.get('/:id', quizController.getQuizByIdWithQuestions);
-
-// POST /api/v1/quizzes - Create a new quiz (Quiz details only for now)
-// TODO: Add middleware: protect, restrictTo('admin', 'teacher')
+// TODO: protect, restrictTo('admin', 'teacher')
 router.post('/', quizController.createQuiz);
-
-// PUT /api/v1/quizzes/:id - Update quiz details
-// TODO: Add middleware: protect, restrictTo('admin', 'teacher')
+// TODO: protect, restrictTo('admin', 'teacher')
 router.put('/:id', quizController.updateQuiz);
-
-// DELETE /api/v1/quizzes/:id - Delete a quiz (and its questions via cascade)
-// TODO: Add middleware: protect, restrictTo('admin', 'teacher')
+// TODO: protect, restrictTo('admin', 'teacher')
 router.delete('/:id', quizController.deleteQuiz);
 
-// --- TODO: Routes for managing Questions within a Quiz ---
-// Example: POST /api/v1/quizzes/:quizId/questions - Add a question
-// Example: PUT /api/v1/quizzes/:quizId/questions/:questionId - Update a question
-// Example: DELETE /api/v1/quizzes/:quizId/questions/:questionId - Delete a question
+// --- Question Routes (nested under a specific quiz) ---
+
+// POST /api/v1/quizzes/:quizId/questions - Add a question to a specific quiz
+// TODO: protect, restrictTo('admin', 'teacher')
+router.post('/:quizId/questions', questionController.addQuestionToQuiz);
+
+// PUT /api/v1/quizzes/:quizId/questions/:questionId - Update a specific question
+// TODO: protect, restrictTo('admin', 'teacher')
+router.put('/:quizId/questions/:questionId', questionController.updateQuestion);
+
+// DELETE /api/v1/quizzes/:quizId/questions/:questionId - Delete a specific question
+// TODO: protect, restrictTo('admin', 'teacher')
+router.delete('/:quizId/questions/:questionId', questionController.deleteQuestion);
 
 module.exports = router;
