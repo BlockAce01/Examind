@@ -7,9 +7,57 @@ require('dotenv').config(); // To access JWT_SECRET
 const SALT_ROUNDS = 10; // Cost factor for bcrypt hashing
 
 // --- Registration Controller ---
-// ... (Keep registration code as is) ...
 exports.register = async (req, res, next) => {
-    // ... registration logic ...
+    // 1. Extract data from request body
+    const { name, email, password, role } = req.body;
+
+    // 2. Basic Input Validation
+    if (!name || !email || !password || !role) {
+        // Using return here sends response and stops execution
+        return res.status(400).json({ message: 'Please provide name, email, password, and role' });
+    }
+
+    // Check if role is valid
+    if (role !== 'student' && role !== 'teacher') {
+         return res.status(400).json({ message: 'Invalid role specified. Must be student or teacher.' });
+    }
+
+    try {
+        // 3. Check if user already exists
+        // Ensure correct casing for "User" and "Email" if using quotes
+        const userExists = await db.query('SELECT * FROM "User" WHERE "Email" = $1', [email]);
+
+        if (userExists.rows.length > 0) {
+            return res.status(409).json({ message: 'Email already in use' }); // 409 Conflict
+        }
+
+        // 4. Hash the password
+        const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+        // 5. Insert new user into database
+        // Ensure column names match schema ("Name", "Email", "Password", etc.)
+        const newUserQuery = `
+            INSERT INTO "User" ("Name", "Email", "Password", "Points", "Badges", "SubscriptionStatus", "Role")
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING "UserID", "Name", "Email", "Role", "SubscriptionStatus";
+        `;
+        // Make sure order of values matches columns
+        const values = [name, email, hashedPassword, 0, null, 'free', role];
+
+        const result = await db.query(newUserQuery, values);
+        const newUser = result.rows[0];
+
+        // 6. Send success response (don't send password back)
+        res.status(201).json({
+            message: 'User registered successfully!',
+            user: newUser
+        });
+
+    } catch (err) {
+        console.error('Registration Error:', err.stack || err); // Log full error
+        // Pass error to the global error handler in server.js
+        next(err);
+    }
 };
 
 // --- Login Controller ---

@@ -1,4 +1,4 @@
-// backend/controllers/discussionController.js
+//backend/controllers/discussionController.js
 const db = require('../config/db');
 
 // Get All Forum Topics
@@ -6,7 +6,7 @@ exports.getAllForums = async (req, res, next) => {
     try {
         // Ensure column names ("ForumID", "Topic", "LastActivity", etc.) match schema
         const query = 'SELECT * FROM "DiscussionForum" ORDER BY "LastActivity" DESC NULLS LAST';
-        const { rows } = await db.query(query);
+        const {rows} = await db.query(query);
         res.status(200).json({
             status: 'success',
             results: rows.length,
