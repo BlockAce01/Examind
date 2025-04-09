@@ -2,37 +2,27 @@
 const express = require('express');
 const router = express.Router();
 const quizController = require('../controllers/quizController');
-const questionController = require('../controllers/quizController'); // Or require('../controllers/questionController') if separated
+const questionController = require('../controllers/quizController'); // Using same controller
 
-// const { protect, restrictTo } = require('../middleware/authMiddleware'); // TODO: Add later
+// const { protect, restrictTo } = require('../middleware/authMiddleware');
 
 // --- Quiz Routes ---
 router.get('/', quizController.getAllQuizzes);
 router.get('/:id', quizController.getQuizByIdWithQuestions);
-// TODO: protect, restrictTo('admin', 'teacher')
-router.post('/', quizController.createQuiz);
-// TODO: protect, restrictTo('admin', 'teacher')
-router.put('/:id', quizController.updateQuiz);
-// TODO: protect, restrictTo('admin', 'teacher')
-router.delete('/:id', quizController.deleteQuiz);
+router.post('/', quizController.createQuiz); // TODO: Protect
+router.put('/:id', quizController.updateQuiz); // TODO: Protect
+router.delete('/:id', quizController.deleteQuiz); // TODO: Protect
 
-// --- Question Routes (nested under a specific quiz) ---
+// --- Question Routes ---
+router.post('/:quizId/questions', questionController.addQuestionToQuiz); // TODO: Protect
+router.put('/:quizId/questions/:questionId', questionController.updateQuestion); // TODO: Protect
+router.delete('/:quizId/questions/:questionId', questionController.deleteQuestion); // TODO: Protect
 
-// POST /api/v1/quizzes/:quizId/questions - Add a question to a specific quiz
-// TODO: protect, restrictTo('admin', 'teacher')
-router.post('/:quizId/questions', questionController.addQuestionToQuiz);
+// --- Quiz Submission Route ---
+router.post('/:quizId/submit', quizController.submitQuiz); // TODO: Protect (user)
 
-// PUT /api/v1/quizzes/:quizId/questions/:questionId - Update a specific question
-// TODO: protect, restrictTo('admin', 'teacher')
-router.put('/:quizId/questions/:questionId', questionController.updateQuestion);
-
-// DELETE /api/v1/quizzes/:quizId/questions/:questionId - Delete a specific question
-// TODO: protect, restrictTo('admin', 'teacher')
-router.delete('/:quizId/questions/:questionId', questionController.deleteQuestion);
-
-// --- NEW Quiz Submission Route ---
-// POST /api/v1/quizzes/:quizId/submit - Submit user answers for a quiz
-// TODO: Add middleware: protect (any logged-in user)
-router.post('/:quizId/submit', quizController.submitQuiz); // Add this line
+// --- Quiz Result Route ---
+// GET /api/v1/quizzes/:quizId/result
+router.get('/:quizId/result', quizController.getQuizResultForUser); // Corrected to GET // TODO: Protect (user)
 
 module.exports = router;

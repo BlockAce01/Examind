@@ -253,119 +253,120 @@ exports.deleteQuestion = async (req, res, next) => {
 // --- NEW Quiz Submission Controller ---
 exports.submitQuiz = async (req, res, next) => {
     const { quizId } = req.params; // Get QuizID from route parameter
-    // Get user answers from request body (expecting an array of selected option indexes)
-    const { answers } = req.body;
+    const { answers } = req.body; // Get user answers from request body
     // TODO: Get authenticated user ID from protect middleware:
     const userId = 1; // <<< --- Placeholder - REPLACE with req.user.userId later
 
-    // Validate input
-    if (!userId) { // Check if userId was obtained (will be relevant after adding middleware)
-         return res.status(401).json({ message: 'User not authenticated.' });
-    }
+    if (!userId) { return res.status(401).json({ message: 'User not authenticated.' }); }
     const quizIdNum = parseInt(quizId, 10);
-    if (isNaN(quizIdNum)) {
-         return res.status(400).json({ message: 'Invalid Quiz ID format.' });
-    }
-    if (!Array.isArray(answers)) {
-        return res.status(400).json({ message: 'Invalid answers format. Expected an array.' });
-    }
+    if (isNaN(quizIdNum)) { return res.status(400).json({ message: 'Invalid Quiz ID format.' }); }
+    if (!Array.isArray(answers)) { return res.status(400).json({ message: 'Invalid answers format. Expected an array.' }); }
 
-    // Use a transaction to ensure atomicity (fetch answers, calculate score, save result, update points)
     const client = await pool.connect();
     console.log(`[submitQuiz] User ${userId} submitting answers for Quiz ${quizIdNum}`);
-
     try {
-        await client.query('BEGIN'); // Start transaction
-
-        // 1. Fetch Correct Answers for the Quiz
+        await client.query('BEGIN');
         console.log(`[submitQuiz] Fetching correct answers for Quiz ${quizIdNum}`);
         const questionsQuery = `
-            SELECT "QuestionID", "CorrectAnswerIndex"
-            FROM "Question"
-            WHERE "QuizID" = $1
-            ORDER BY "QuestionID" ASC; -- IMPORTANT: Ensure order matches frontend submission
+            SELECT "QuestionID", "CorrectAnswerIndex" FROM "Question"
+            WHERE "QuizID" = $1 ORDER BY "QuestionID" ASC;
         `;
         const questionsResult = await client.query(questionsQuery, [quizIdNum]);
         const correctAnswers = questionsResult.rows;
 
-        if (correctAnswers.length === 0) {
-            console.log(`[submitQuiz] No questions found for Quiz ${quizIdNum}. Cannot submit.`);
-            throw new Error('Quiz has no questions or does not exist.'); // Throw error to rollback
-        }
+        if (correctAnswers.length === 0) { throw new Error('Quiz has no questions or does not exist.'); }
+        if (answers.length !== correctAnswers.length) { return res.status(400).json({ message: `Answer count mismatch. Expected ${correctAnswers.length} answers.` }); }
 
-        // Ensure submitted answers array length matches number of questions
-        if (answers.length !== correctAnswers.length) {
-            console.log(`[submitQuiz] Mismatch: received ${answers.length} answers, expected ${correctAnswers.length}.`);
-            return res.status(400).json({ message: `Answer count mismatch. Expected ${correctAnswers.length} answers.` });
-        }
-
-        // 2. Calculate Score
         let score = 0;
         correctAnswers.forEach((question, index) => {
-            // Ensure answers[index] is compared correctly (null vs number)
-            const userAnswer = answers[index]; // Can be null if not answered
-            if (userAnswer !== null && typeof userAnswer === 'number' && userAnswer === question.CorrectAnswerIndex) {
-                score++;
-            }
+            const userAnswer = answers[index];
+            if (userAnswer !== null && typeof userAnswer === 'number' && userAnswer === question.CorrectAnswerIndex) { score++; }
         });
         const totalQuestions = correctAnswers.length;
         console.log(`[submitQuiz] Score calculated: ${score} / ${totalQuestions}`);
 
-        // 3. Save Result to "Takes" table
-        // Handle potential duplicate submissions (if using composite PK) with ON CONFLICT
         console.log(`[submitQuiz] Saving result for User ${userId}, Quiz ${quizIdNum}`);
         const takesQuery = `
             INSERT INTO "Takes" ("UserID", "QuizID", "MarksObtained", "SubmissionTime")
             VALUES ($1, $2, $3, NOW())
-            ON CONFLICT ("UserID", "QuizID") DO UPDATE -- If user already took it...
-            SET "MarksObtained" = EXCLUDED."MarksObtained", -- ...update the score
-                "SubmissionTime" = NOW()                 -- ...and timestamp
+            ON CONFLICT ("UserID", "QuizID") DO UPDATE
+            SET "MarksObtained" = EXCLUDED."MarksObtained", "SubmissionTime" = NOW()
             RETURNING *;
         `;
         const takesResult = await client.query(takesQuery, [userId, quizIdNum, score]);
         console.log(`[submitQuiz] Result saved/updated in "Takes" table. Row:`, takesResult.rows[0]);
 
-        // --- TODO: Gamification Part 1 - Update User Points (Example) ---
-        // Define how many points per correct answer, or based on percentage etc.
-        const pointsEarned = score * 5; // Example: 5 points per correct answer
+        const pointsEarned = score * 5;
         if (pointsEarned > 0) {
              console.log(`[submitQuiz] Awarding ${pointsEarned} points to User ${userId}`);
-             const pointsQuery = `
-                 UPDATE "User"
-                 SET "Points" = COALESCE("Points", 0) + $1
-                 WHERE "UserID" = $2;
-             `;
+             const pointsQuery = `UPDATE "User" SET "Points" = COALESCE("Points", 0) + $1 WHERE "UserID" = $2;`;
              await client.query(pointsQuery, [pointsEarned, userId]);
              console.log(`[submitQuiz] Points updated for User ${userId}`);
         }
-        // -------------------------------------------------------------
 
-        await client.query('COMMIT'); // Commit transaction
-
-        // 4. Send Response
+        await client.query('COMMIT');
         console.log(`[submitQuiz] Sending success response for User ${userId}, Quiz ${quizIdNum}`);
         res.status(200).json({
-            status: 'success',
-            message: 'Quiz submitted successfully!',
-            data: {
-                score: score,
-                totalQuestions: totalQuestions,
-                // You might return the full 'Takes' record ID if needed
-                // takesRecord: takesResult.rows[0]
-                // Optionally return feedback/correct answers here if needed immediately
-            }
+            status: 'success', message: 'Quiz submitted successfully!',
+            data: { score: score, totalQuestions: totalQuestions }
         });
         console.log(`[submitQuiz] Success response sent.`);
-
     } catch (err) {
-        await client.query('ROLLBACK'); // Rollback transaction on error
+        await client.query('ROLLBACK');
         console.error(`--- ERROR in submitQuiz for User ${userId}, Quiz ${quizIdNum} ---`);
         console.error("Error Message:", err.message);
         console.error("Error Stack:", err.stack || 'No stack available');
         console.error(`---------------------------------------------------------------`);
-        next(err); // Pass to global error handler
+        next(err);
     } finally {
-        client.release(); // Release client back to pool
+        client.release();
         console.log(`[submitQuiz] Client released for User ${userId}, Quiz ${quizIdNum}`);
     }
 };
+
+// Get Quiz Result for a Specific User
+exports.getQuizResultForUser = async (req, res, next) => {
+    const { quizId } = req.params;
+    // TODO: Replace with actual user ID from authentication middleware
+    const userId = 1; // <<< --- Placeholder - REPLACE with req.user.userId later
+    const quizIdNum = parseInt(quizId, 10);
+
+    if (isNaN(quizIdNum)) return res.status(400).json({ message: 'Invalid Quiz ID format.' });
+    if (!userId) return res.status(401).json({ message: 'User not authenticated.' });
+
+    console.log(`[getQuizResult] Fetching result for User ${userId}, Quiz ${quizIdNum}`);
+    try {
+        const quizQuery = 'SELECT "Title", (SELECT COUNT(*) FROM "Question" WHERE "QuizID" = $1)::int AS "totalQuestions" FROM "Quiz" WHERE "QuizID" = $1';
+        const quizRes = await db.query(quizQuery, [quizIdNum]);
+        if (quizRes.rows.length === 0) {
+             console.log(`[getQuizResult] Quiz ${quizIdNum} not found.`);
+             return res.status(404).json({ message: 'Quiz not found.' });
+        }
+
+        const takesQuery = 'SELECT "MarksObtained", "SubmissionTime" FROM "Takes" WHERE "UserID" = $1 AND "QuizID" = $2';
+        const takesRes = await db.query(takesQuery, [userId, quizIdNum]);
+        if (takesRes.rows.length === 0) {
+            console.log(`[getQuizResult] No result found for User ${userId}, Quiz ${quizIdNum}.`);
+            return res.status(404).json({ message: 'Result not found for this user and quiz.' });
+        }
+
+        console.log(`[getQuizResult] Result found. Sending success response.`);
+        res.status(200).json({
+            status: 'success',
+            data: {
+                quizTitle: quizRes.rows[0].Title,
+                score: takesRes.rows[0].MarksObtained,
+                totalQuestions: quizRes.rows[0].totalQuestions, // Already integer from DB cast
+                submissionTime: takesRes.rows[0].SubmissionTime
+            }
+        });
+    } catch (err) {
+         console.error(`--- ERROR in getQuizResultForUser for User ${userId}, Quiz ${quizIdNum} ---`);
+         console.error("Error Message:", err.message);
+         console.error("Error Stack:", err.stack || 'No stack available');
+         console.error(`-------------------------------------------------------------------`);
+         next(err);
+     }
+};
+
+// --- REMOVE THE EXTRA BRACE ---
