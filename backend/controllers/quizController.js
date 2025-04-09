@@ -1,5 +1,7 @@
 // examind-backend/controllers/quizController.js
 const db = require('../config/db');
+const pool = require('../config/db').pool; // Import the pool for transactions
+
 
 // Get All Quizzes (including question count) - CORRECTED
 exports.getAllQuizzes = async (req, res, next) => {
@@ -245,5 +247,125 @@ exports.deleteQuestion = async (req, res, next) => {
     } catch (err) {
         console.error(`Error deleting question ${questionId} from quiz ${quizId}:`, err);
         next(err);
+    }
+};
+
+// --- NEW Quiz Submission Controller ---
+exports.submitQuiz = async (req, res, next) => {
+    const { quizId } = req.params; // Get QuizID from route parameter
+    // Get user answers from request body (expecting an array of selected option indexes)
+    const { answers } = req.body;
+    // TODO: Get authenticated user ID from protect middleware:
+    const userId = 1; // <<< --- Placeholder - REPLACE with req.user.userId later
+
+    // Validate input
+    if (!userId) { // Check if userId was obtained (will be relevant after adding middleware)
+         return res.status(401).json({ message: 'User not authenticated.' });
+    }
+    const quizIdNum = parseInt(quizId, 10);
+    if (isNaN(quizIdNum)) {
+         return res.status(400).json({ message: 'Invalid Quiz ID format.' });
+    }
+    if (!Array.isArray(answers)) {
+        return res.status(400).json({ message: 'Invalid answers format. Expected an array.' });
+    }
+
+    // Use a transaction to ensure atomicity (fetch answers, calculate score, save result, update points)
+    const client = await pool.connect();
+    console.log(`[submitQuiz] User ${userId} submitting answers for Quiz ${quizIdNum}`);
+
+    try {
+        await client.query('BEGIN'); // Start transaction
+
+        // 1. Fetch Correct Answers for the Quiz
+        console.log(`[submitQuiz] Fetching correct answers for Quiz ${quizIdNum}`);
+        const questionsQuery = `
+            SELECT "QuestionID", "CorrectAnswerIndex"
+            FROM "Question"
+            WHERE "QuizID" = $1
+            ORDER BY "QuestionID" ASC; -- IMPORTANT: Ensure order matches frontend submission
+        `;
+        const questionsResult = await client.query(questionsQuery, [quizIdNum]);
+        const correctAnswers = questionsResult.rows;
+
+        if (correctAnswers.length === 0) {
+            console.log(`[submitQuiz] No questions found for Quiz ${quizIdNum}. Cannot submit.`);
+            throw new Error('Quiz has no questions or does not exist.'); // Throw error to rollback
+        }
+
+        // Ensure submitted answers array length matches number of questions
+        if (answers.length !== correctAnswers.length) {
+            console.log(`[submitQuiz] Mismatch: received ${answers.length} answers, expected ${correctAnswers.length}.`);
+            return res.status(400).json({ message: `Answer count mismatch. Expected ${correctAnswers.length} answers.` });
+        }
+
+        // 2. Calculate Score
+        let score = 0;
+        correctAnswers.forEach((question, index) => {
+            // Ensure answers[index] is compared correctly (null vs number)
+            const userAnswer = answers[index]; // Can be null if not answered
+            if (userAnswer !== null && typeof userAnswer === 'number' && userAnswer === question.CorrectAnswerIndex) {
+                score++;
+            }
+        });
+        const totalQuestions = correctAnswers.length;
+        console.log(`[submitQuiz] Score calculated: ${score} / ${totalQuestions}`);
+
+        // 3. Save Result to "Takes" table
+        // Handle potential duplicate submissions (if using composite PK) with ON CONFLICT
+        console.log(`[submitQuiz] Saving result for User ${userId}, Quiz ${quizIdNum}`);
+        const takesQuery = `
+            INSERT INTO "Takes" ("UserID", "QuizID", "MarksObtained", "SubmissionTime")
+            VALUES ($1, $2, $3, NOW())
+            ON CONFLICT ("UserID", "QuizID") DO UPDATE -- If user already took it...
+            SET "MarksObtained" = EXCLUDED."MarksObtained", -- ...update the score
+                "SubmissionTime" = NOW()                 -- ...and timestamp
+            RETURNING *;
+        `;
+        const takesResult = await client.query(takesQuery, [userId, quizIdNum, score]);
+        console.log(`[submitQuiz] Result saved/updated in "Takes" table. Row:`, takesResult.rows[0]);
+
+        // --- TODO: Gamification Part 1 - Update User Points (Example) ---
+        // Define how many points per correct answer, or based on percentage etc.
+        const pointsEarned = score * 5; // Example: 5 points per correct answer
+        if (pointsEarned > 0) {
+             console.log(`[submitQuiz] Awarding ${pointsEarned} points to User ${userId}`);
+             const pointsQuery = `
+                 UPDATE "User"
+                 SET "Points" = COALESCE("Points", 0) + $1
+                 WHERE "UserID" = $2;
+             `;
+             await client.query(pointsQuery, [pointsEarned, userId]);
+             console.log(`[submitQuiz] Points updated for User ${userId}`);
+        }
+        // -------------------------------------------------------------
+
+        await client.query('COMMIT'); // Commit transaction
+
+        // 4. Send Response
+        console.log(`[submitQuiz] Sending success response for User ${userId}, Quiz ${quizIdNum}`);
+        res.status(200).json({
+            status: 'success',
+            message: 'Quiz submitted successfully!',
+            data: {
+                score: score,
+                totalQuestions: totalQuestions,
+                // You might return the full 'Takes' record ID if needed
+                // takesRecord: takesResult.rows[0]
+                // Optionally return feedback/correct answers here if needed immediately
+            }
+        });
+        console.log(`[submitQuiz] Success response sent.`);
+
+    } catch (err) {
+        await client.query('ROLLBACK'); // Rollback transaction on error
+        console.error(`--- ERROR in submitQuiz for User ${userId}, Quiz ${quizIdNum} ---`);
+        console.error("Error Message:", err.message);
+        console.error("Error Stack:", err.stack || 'No stack available');
+        console.error(`---------------------------------------------------------------`);
+        next(err); // Pass to global error handler
+    } finally {
+        client.release(); // Release client back to pool
+        console.log(`[submitQuiz] Client released for User ${userId}, Quiz ${quizIdNum}`);
     }
 };
