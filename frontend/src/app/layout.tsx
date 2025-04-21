@@ -5,8 +5,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Examind - A/L Learning Platform",
-  description: "Gamified AI Learning Platform for Sri Lankan A/L Students",
+  title: "Httoooooo",
+  description: "pakoooooo",
   icons: {
   icon: '/favicon.png',
   apple: '/apple-icon.png',
