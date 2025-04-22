@@ -1,16 +1,15 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import React from 'react';
-import { useAuth } from '@/context/AuthContext'; // Import useAuth
-import { Cog8ToothIcon, ArrowRightOnRectangleIcon} from '@heroicons/react/24/outline'; // Example admin icon
+import { useAuth } from '@/context/AuthContext';
+import { Cog8ToothIcon, ArrowRightOnRectangleIcon} from '@heroicons/react/24/outline';
 
 const Navbar = () => {
   const { isAuthenticated, user, logout, isLoading } = useAuth(); 
 
-  // Don't render auth-dependent parts until loading is complete
   if (isLoading) {
-    // Optional: Render a simplified loading state or null
     return (
          <nav className="bg-blue-600 text-white p-4 shadow-md">
             <div className="container mx-auto flex justify-between items-center">
@@ -23,8 +22,9 @@ const Navbar = () => {
   return (
     <nav className="bg-blue-600 text-white p-4 shadow-md">
       <div className="container mx-auto flex justify-between items-center">
-        {/* Link to dashboard if logged in, otherwise homepage */}
-        <Link href={isAuthenticated ? "/dashboard" : "/app"} className="text-2xl font-bold hover:text-blue-200">
+        {}
+        <Link href={isAuthenticated ? "/dashboard" : "/app"} className="text-2xl font-bold hover:text-blue-200 flex items-center">
+          <Image src="/apple-icon.png" alt="Examind Logo" width={40} height={40} className="mr-2" />
           Examind
         </Link>
 
