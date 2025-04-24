@@ -27,7 +27,6 @@ const Navbar = () => {
           <Image src="/apple-icon.png" alt="Examind Logo" width={40} height={40} className="mr-2" />
           Examind
         </Link>
-
         <div className="space-x-4 flex items-center"> {}
           {}
           {isAuthenticated && (
