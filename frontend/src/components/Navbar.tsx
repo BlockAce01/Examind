@@ -27,7 +27,6 @@ const Navbar = () => {
           <Image src="/apple-icon.png" alt="Examind Logo" width={40} height={40} className="mr-2" />
           Examind
         </Link>
-
         <div className="space-x-4 flex items-center"> {}
           {}
           {isAuthenticated && (
@@ -41,7 +40,7 @@ const Navbar = () => {
             </>
           )}
 
-           {/*admin specific link*/}
+           {/*admin specific link*/
            {user?.role === 'admin' && (
               <Link href="/admin" className="hover:text-yellow-300 flex items-center text-sm bg-yellow-500 px-2 py-1 rounded">
                   <Cog8ToothIcon className="w-4 h-4 mr-1"/> Admin Panel
