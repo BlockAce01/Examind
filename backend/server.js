@@ -24,7 +24,7 @@ app.use('/api/v1/auth', require('./routes/authRoutes'));
 //quiz routes
 app.use('/api/v1/quizzes', require('./routes/quizRoutes'));
 //resource routes
-
+app.use('/api/v1/resources', require('./routes/resourceRoutes'));
 //discussion routes
 
 //user routes(for admin)
