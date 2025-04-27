@@ -1,148 +1,134 @@
+
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; 
 import Link from 'next/link';
-import QuizCard from '@/components/quiz/QuizCard';
-import { type QuizListItem } from '@/types/quiz';
-import EmptyState from '@/components/ui/EmptyState';
+
+
+import { type QuizListItem } from '@/types/quiz'; 
 import Button from '@/components/ui/Button';
-import Spinner from '@/components/ui/Spinner';
-import { useAuth } from '@/context/AuthContext';
-//import { getMockLoggedInUser, type User as MockUserType } from '@/data/mockUsers';
+import Spinner from '@/components/ui/Spinner'; 
+import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { useAuth } from '@/context/AuthContext'; // assuming you might use token later
 
-//helper function
-const getUniqueValues = (items: QuizListItem[], key: keyof QuizListItem) => {
-    const values = items.map(item => item[key]).filter(Boolean);
-    return Array.from(new Set(values as string[]));
-}
-
-//Simulate roles
-//const SIMULATED_ROLE: 'student' | 'teacher' | 'admin' = 'student';
-
-
-export default function QuizzesPage() {
-    const [quizzes, setQuizzes] = useState<QuizListItem[]>([]);
+export default function AdminQuizzesPage() {
+    const [quizzes, setQuizzes] = useState<QuizListItem[]>([]); // Use shared type
     const [isLoading, setIsLoading] = useState(true);
-    const [selectedSubject, setSelectedSubject] = useState('');
-    const [selectedDifficulty, setSelectedDifficulty] = useState('');
+    const [error, setError] = useState<string | null>(null);
+    const { token } = useAuth(); // get token if needed for delete
 
-    //get auth context
-    const { user, token } = useAuth();
-    //const currentUser: MockUserType | undefined = getMockLoggedInUser(SIMULATED_ROLE);
-    const isAdminOrTeacher = user?.role === 'teacher' || user?.role === 'admin';
-
-    //data fetching
-    useEffect(() => {
-        const fetchQuizzes = async () => {
-            setIsLoading(true);
-            if (!token) {
-                setIsLoading(false);
-                return;
+    // --- Fetch Data ---
+    const fetchAdminQuizzes = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+            const response = await fetch(`${apiUrl}/api/v1/quizzes`, {
+                 headers: { /* add auth header if needed */ },
+            });
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+            if (data.status === 'success' && Array.isArray(data.data?.quizzes)) {
+                setQuizzes(data.data.quizzes); // ensure response matches QuizListItem[]
+            } else {
+                throw new Error(data.message || 'Invalid API response format');
             }
+        } catch (err: any) {
+            setError(err.message || 'Failed to fetch quizzes.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchAdminQuizzes();
+    }, []); // fetch on mount
+
+    // --- Handle Delete ---
+    const handleDelete = async (QuizID: number, Title: string) => { // Use correct casing for ID/Title from state
+        if (!token) { /* handle no token */ return; }
+        if (window.confirm(`Are you sure you want to delete the quiz "${Title}"?`)) {
             try {
+                setError(null);
                 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-                const response = await fetch(`${apiUrl}/api/v1/quizzes`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`, //Add Authorization
-                    },
+                const response = await fetch(`${apiUrl}/api/v1/quizzes/${QuizID}`, { // Use QuizID
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` },
                 });
-
-                if (!response.ok) {
-                    if (response.status === 401) {
-                    } else {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                }
-                const data = await response.json();
-
-                //check quiz structure
-                if (data.status === 'success' && Array.isArray(data.data?.quizzes)) {
-                    setQuizzes(data.data.quizzes)
+                if (response.status === 204) {
+                    setQuizzes(currentQuizzes => currentQuizzes.filter(q => q.QuizID !== QuizID)); 
+                    alert(`Quiz "${Title}" deleted successfully.`);
                 } else {
-                    throw new Error(data.message || 'Invalid API response format');
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || `Failed to delete. Status: ${response.status}`);
                 }
             } catch (err: any) {
-                console.error("Failed to fetch quizzes:", err);
-            } finally {
-                setIsLoading(false);
+                setError(err.message || 'Could not delete quiz.');
+                alert(`Error deleting quiz: ${err.message}`);
             }
-        };
-
-        fetchQuizzes();
-    }, [token]); //add token to dependency array
-
-    //ensure keys match the QuizListItem type casing
-    const uniqueSubjects = getUniqueValues(quizzes, 'Subject');
-    const difficulties = ['Easy', 'Medium', 'Hard'];
-
-    //client-side filter logic
-    const filteredQuizzes = quizzes.filter(quiz => {
-        const matchesSubject = selectedSubject === '' || quiz.Subject === selectedSubject;
-        const matchesDifficulty = selectedDifficulty === '' || quiz.DifficultyLevel === selectedDifficulty;
-        return matchesSubject && matchesDifficulty;
-    });
+        }
+    };
 
     return (
         <div>
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold text-gray-800">Available Quizzes</h1>
-                {isAdminOrTeacher && (
-                    <Link href="/admin/quizzes/new">
-                        <Button variant='primary' className="bg-green-600 hover:bg-green-700">
-                            + Create Quiz
-                        </Button>
-                    </Link>
-                )}
+                <h1 className="text-2xl font-bold text-gray-800">Manage Quizzes</h1>
+                <Link href="/admin/quizzes/new">
+                    <Button variant="primary" className="bg-green-600 hover:bg-green-700">
+                        + Add New Quiz
+                    </Button>
+                </Link>
             </div>
 
-            {/*filter UI*/}
-            <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200 flex flex-col sm:flex-row gap-4">
-                <select
-                    value={selectedSubject}
-                    onChange={(e) => setSelectedSubject(e.target.value)}
-                    className="p-2 border rounded bg-white focus:ring-2 focus:ring-blue-300 focus:outline-none flex-grow sm:flex-grow-0"
-                >
-                    <option value="">All Subjects</option>
-                    {uniqueSubjects.map((subject, index) => (
-                        <option key={index} value={subject}>{subject}</option>
-                    ))}
-                </select>
-                <select
-                    value={selectedDifficulty}
-                    onChange={(e) => setSelectedDifficulty(e.target.value)}
-                    className="p-2 border rounded bg-white focus:ring-2 focus:ring-blue-300 focus:outline-none flex-grow sm:flex-grow-0"
-                >
-                    <option value="">All Difficulties</option>
-                    {difficulties.map((level) => (
-                        <option key={level} value={level}>{level}</option>
-                    ))}
-                </select>
-                <Button
-                    variant='secondary'
-                    onClick={() => { setSelectedSubject(''); setSelectedDifficulty(''); }}
-                    disabled={!selectedSubject && !selectedDifficulty}
-                    className="disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    Clear Filters
-                </Button>
-            </div>
-
-            {/*content area*/}
             {isLoading ? (
-                <div className="flex justify-center items-center min-h-[300px]">
-                    <Spinner size="lg" />
-                </div>
-            ) : filteredQuizzes.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredQuizzes.map((quiz) => (
-                        <QuizCard key={quiz.QuizID} quiz={quiz} />
-                    ))}
-                </div>
+                 <div className="flex justify-center p-10"><Spinner size="lg" /></div>
+            ) : error ? (
+                 <div className="text-center p-6 text-red-600 bg-red-50 border border-red-200 rounded-lg">Error: {error}</div>
             ) : (
-                <EmptyState
-                    title="No Quizzes Found"
-                    message="No quizzes currently match your selected filters or none are available."
-                />
+                <div className="bg-white shadow-md rounded-lg overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Difficulty</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Questions</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                            {quizzes.length > 0 ? (
+                                quizzes.map((quiz) => (
+                                    <tr key={quiz.QuizID} className="hover:bg-gray-50">
+                                        {/* use correct casing from quizListItem */}
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{quiz.QuizID}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{quiz.Title}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{quiz.Subject}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{quiz.DifficultyLevel}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{quiz.questionCount ?? 'N/A'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                            <Link href={`/admin/quizzes/edit/${quiz.QuizID}`} className="text-indigo-600 hover:text-indigo-900 inline-flex items-center" title="Edit">
+                                                <PencilSquareIcon className="w-4 h-4"/>
+                                            </Link>
+                                            <button
+                                                onClick={() => handleDelete(quiz.QuizID, quiz.Title)}
+                                                className="text-red-600 hover:text-red-900 inline-flex items-center"
+                                                title="Delete"
+                                            >
+                                                <TrashIcon className="w-4 h-4"/>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">No quizzes found. Add one!</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             )}
         </div>
     );
