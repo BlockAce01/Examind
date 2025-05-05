@@ -1,3 +1,4 @@
+
 export interface Resource {
     ResourceID: number; // Matche DB schema 
     Title: string;
@@ -7,5 +8,5 @@ export interface Resource {
     FileURL: string;
     Description?: string | null; 
     UploadedDate?: string | null; 
-   
+
 }

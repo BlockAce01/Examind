@@ -2,7 +2,8 @@
 const express = require('express');
 const router = express.Router();
 const quizController = require('../controllers/quizController');
-const questionController = require('../controllers/quizController'); 
+const questionController = require('../controllers/quizController');
+const { protect } = require('../middleware/authMiddleware');
 
 
 
@@ -17,11 +18,10 @@ router.post('/:quizId/questions', questionController.addQuestionToQuiz);
 router.put('/:quizId/questions/:questionId', questionController.updateQuestion); 
 router.delete('/:quizId/questions/:questionId', questionController.deleteQuestion);
 
-//  quiz submission route 
-router.post('/:quizId/submit', quizController.submitQuiz); 
+ //quiz submission route
+router.post('/:quizId/submit', protect, quizController.submitQuiz);
 
-// quiz result route
-
-router.get('/:quizId/result', quizController.getQuizResultForUser); 
+//quiz result route
+router.get('/:quizId/result', protect, quizController.getQuizResultForUser);
 
 module.exports = router;

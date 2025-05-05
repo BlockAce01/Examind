@@ -1,11 +1,11 @@
 import React from 'react';
-import { DocumentMagnifyingGlassIcon } from '@heroicons/react/24/outline'; 
+import { DocumentMagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 interface EmptyStateProps {
   icon?: React.ReactNode;
   title?: string;
   message: string;
-  action?: React.ReactNode; 
+  action?: React.ReactNode;
 }
 
 const EmptyState: React.FC<EmptyStateProps> = ({
@@ -16,7 +16,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
 }) => {
   return (
     <div className="text-center p-10 border border-dashed border-gray-300 rounded-lg bg-gray-50 my-6">
-      <div className="mx-auto mb-3 w-fit"> {/* Center the icon */}
+      <div className="mx-auto mb-3 w-fit">
          {icon}
       </div>
       <h3 className="text-lg font-semibold text-gray-700 mb-1">{title}</h3>
