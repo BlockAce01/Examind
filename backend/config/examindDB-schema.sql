@@ -1,0 +1,234 @@
+CREATE TABLE public."Access"
+(
+    "AccessID" serial NOT NULL,
+    "UserID" integer NOT NULL,
+    "ResourceID" integer NOT NULL,
+    "AccessDate" timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "Access_pkey" PRIMARY KEY ("AccessID")
+);
+
+CREATE TABLE public."Challenge"
+(
+    "ChallengeID" serial NOT NULL,
+    "Type" character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    "Subject" character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    "Title" character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    "Description" text COLLATE pg_catalog."default",
+    "PointsReward" integer NOT NULL DEFAULT 0,
+    CONSTRAINT "Challenge_pkey" PRIMARY KEY ("ChallengeID")
+);
+
+CREATE TABLE public."DiscussionForum"
+(
+    "ForumID" serial NOT NULL,
+    "Topic" character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    "Description" text COLLATE pg_catalog."default",
+    "PostCount" integer DEFAULT 0,
+    "LastActivity" timestamp with time zone,
+    "CreatorUserID" integer,
+    CONSTRAINT "DiscussionForum_pkey" PRIMARY KEY ("ForumID")
+);
+
+CREATE TABLE public."Earn"
+(
+    "EarnID" serial NOT NULL,
+    "UserID" integer NOT NULL,
+    "RewardID" integer NOT NULL,
+    "RedemptionDate" timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "Earn_pkey" PRIMARY KEY ("EarnID")
+);
+
+CREATE TABLE public."Participate"
+(
+    "UserID" integer NOT NULL,
+    "ChallengeID" integer NOT NULL,
+    "CompletionStatus" character varying(50) COLLATE pg_catalog."default" NOT NULL DEFAULT 'pending'::character varying,
+    "CompletedDate" timestamp with time zone,
+    CONSTRAINT "Participate_pkey" PRIMARY KEY ("UserID", "ChallengeID")
+);
+
+CREATE TABLE public."Post"
+(
+    "PostID" serial NOT NULL,
+    "ForumID" integer NOT NULL,
+    "UserID" integer NOT NULL,
+    "Content" text COLLATE pg_catalog."default" NOT NULL,
+    "Upvotes" integer DEFAULT 0,
+    "Date" timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    "ParentPostID" integer,
+    CONSTRAINT "Post_pkey" PRIMARY KEY ("PostID")
+);
+
+CREATE TABLE public."Question"
+(
+    "QuestionID" serial NOT NULL,
+    "QuizID" integer NOT NULL,
+    "Text" text COLLATE pg_catalog."default" NOT NULL,
+    "Options" text[] COLLATE pg_catalog."default" NOT NULL,
+    "CorrectAnswerIndex" integer NOT NULL,
+    CONSTRAINT "Question_pkey" PRIMARY KEY ("QuestionID")
+);
+
+CREATE TABLE public."Quiz"
+(
+    "QuizID" serial NOT NULL,
+    "Title" character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    "Subject" character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    "DifficultyLevel" character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    "TimeLimit" integer NOT NULL,
+    CONSTRAINT "Quiz_pkey" PRIMARY KEY ("QuizID")
+);
+
+CREATE TABLE public."Resource"
+(
+    "ResourceID" serial NOT NULL,
+    "Title" character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    "Type" character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    "Subject" character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    "FileURL" character varying(2048) COLLATE pg_catalog."default" NOT NULL,
+    "Description" text COLLATE pg_catalog."default",
+    "UploadedDate" timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    "UploaderUserID" integer,
+    "Year" integer,
+    CONSTRAINT "Resource_pkey" PRIMARY KEY ("ResourceID")
+);
+
+CREATE TABLE public."Reward"
+(
+    "RewardID" serial NOT NULL,
+    "Name" character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    "Description" text COLLATE pg_catalog."default",
+    "PointsRequired" integer NOT NULL DEFAULT 0,
+    "AvailabilityStatus" character varying(50) COLLATE pg_catalog."default" NOT NULL DEFAULT 'available'::character varying,
+    CONSTRAINT "Reward_pkey" PRIMARY KEY ("RewardID")
+);
+
+CREATE TABLE public."Takes"
+(
+    "UserID" integer NOT NULL,
+    "QuizID" integer NOT NULL,
+    "MarksObtained" integer NOT NULL,
+    "SubmissionTime" timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT takes_pkey PRIMARY KEY ("UserID", "QuizID")
+);
+
+CREATE TABLE public."User"
+(
+    "UserID" serial NOT NULL,
+    "Name" character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    "Email" character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    "Password" character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    "Points" integer DEFAULT 0,
+    "Badges" text COLLATE pg_catalog."default",
+    "SubscriptionStatus" character varying(50) COLLATE pg_catalog."default" NOT NULL DEFAULT 'free'::character varying,
+    "Role" character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT "User_pkey" PRIMARY KEY ("UserID"),
+    CONSTRAINT user_email_unique UNIQUE ("Email")
+);
+
+ALTER TABLE public."Access"
+    ADD CONSTRAINT access_resourceid_foreign FOREIGN KEY ("ResourceID")
+    REFERENCES public."Resource" ("ResourceID") MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE public."Access"
+    ADD CONSTRAINT access_userid_foreign FOREIGN KEY ("UserID")
+    REFERENCES public."User" ("UserID") MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE public."DiscussionForum"
+    ADD CONSTRAINT forum_creator_userid_foreign FOREIGN KEY ("CreatorUserID")
+    REFERENCES public."User" ("UserID") MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE SET NULL;
+
+
+ALTER TABLE public."Earn"
+    ADD CONSTRAINT earn_rewardid_foreign FOREIGN KEY ("RewardID")
+    REFERENCES public."Reward" ("RewardID") MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE public."Earn"
+    ADD CONSTRAINT earn_userid_foreign FOREIGN KEY ("UserID")
+    REFERENCES public."User" ("UserID") MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE public."Participate"
+    ADD CONSTRAINT participate_challengeid_foreign FOREIGN KEY ("ChallengeID")
+    REFERENCES public."Challenge" ("ChallengeID") MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE public."Participate"
+    ADD CONSTRAINT participate_userid_foreign FOREIGN KEY ("UserID")
+    REFERENCES public."User" ("UserID") MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE public."Post"
+    ADD CONSTRAINT post_forumid_foreign FOREIGN KEY ("ForumID")
+    REFERENCES public."DiscussionForum" ("ForumID") MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS idx_post_forumid
+    ON public."Post"("ForumID");
+
+
+ALTER TABLE public."Post"
+    ADD CONSTRAINT post_parent_postid_foreign FOREIGN KEY ("ParentPostID")
+    REFERENCES public."Post" ("PostID") MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE public."Post"
+    ADD CONSTRAINT post_userid_foreign FOREIGN KEY ("UserID")
+    REFERENCES public."User" ("UserID") MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS idx_post_userid
+    ON public."Post"("UserID");
+
+
+ALTER TABLE public."Question"
+    ADD CONSTRAINT question_quizid_foreign FOREIGN KEY ("QuizID")
+    REFERENCES public."Quiz" ("QuizID") MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS idx_question_quizid
+    ON public."Question"("QuizID");
+
+
+ALTER TABLE public."Resource"
+    ADD CONSTRAINT resource_uploader_userid_foreign FOREIGN KEY ("UploaderUserID")
+    REFERENCES public."User" ("UserID") MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE SET NULL;
+
+
+ALTER TABLE public."Takes"
+    ADD CONSTRAINT takes_quizid_foreign FOREIGN KEY ("QuizID")
+    REFERENCES public."Quiz" ("QuizID") MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS idx_takes_quizid
+    ON public."Takes"("QuizID");
+
+
+ALTER TABLE public."Takes"
+    ADD CONSTRAINT takes_userid_foreign FOREIGN KEY ("UserID")
+    REFERENCES public."User" ("UserID") MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS idx_takes_userid
+    ON public."Takes"("UserID");
