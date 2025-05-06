@@ -14,7 +14,7 @@ app.use(express.json());
 
 //basic request logger
 app.use((req, res, next) => {
-    console.log('${req.method} ${req.path}');
+  console.log(`${req.method} ${req.path}`);
     next();
 });
 
@@ -39,7 +39,7 @@ app.get('/', (req, res) => {
 //   error handling middleware
 //catch-all for 404 Not Found errors
 app.use((req, res, next) => {
-    res.status(404).json({ message: 'Route not found: ${req.originalUrl}' });
+  res.status(404).json({ message: `Route not found: ${req.originalUrl}` });
 });
 
 //general error handler
@@ -53,5 +53,5 @@ app.use((err, req, res, next) => {
 
 //   start server
 app.listen(PORT, () => {
-  console.log('Server listening on http://localhost:${PORT}');
+  console.log(`Server listening on http://localhost:${PORT}`);
 });
