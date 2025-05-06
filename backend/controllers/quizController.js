@@ -1,4 +1,3 @@
-
 const db = require('../config/db');
 const pool = require('../config/db').pool; 
 
@@ -40,7 +39,7 @@ exports.getAllQuizzes = async (req, res, next) => {
     }
 };
 
-// get a specific quiz by ID along with its associated questions
+//get a specific quiz by ID along with its associated questions
 exports.getQuizByIdWithQuestions = async (req, res, next) => {
     const { id } = req.params;
    
@@ -250,14 +249,18 @@ exports.deleteQuestion = async (req, res, next) => {
     }
 };
 
-// submit the quiz answers and calculate the score
+//submit the quiz answers and calculate the score
 exports.submitQuiz = async (req, res, next) => {
-    const { quizId } = req.params; 
-    const { answers } = req.body; 
-   
-    const userId = 1; 
+    const { quizId } = req.params;
+    const { answers } = req.body;
+    const userId = req.user?.UserID;
 
-    if (!userId) { return res.status(401).json({ message: 'User not authenticated.' }); }
+    //check if user ID exists
+    if (!userId) {
+        console.log('[submitQuiz] Authentication error: UserID not found on req.user.');
+        return res.status(401).json({ message: 'User not authenticated or UserID missing.' });
+    }
+
     const quizIdNum = parseInt(quizId, 10);
     if (isNaN(quizIdNum)) { return res.status(400).json({ message: 'Invalid Quiz ID format.' }); }
     if (!Array.isArray(answers)) { return res.status(400).json({ message: 'Invalid answers format. Expected an array.' }); }
@@ -327,12 +330,16 @@ exports.submitQuiz = async (req, res, next) => {
 // get quiz result for a specific user
 exports.getQuizResultForUser = async (req, res, next) => {
     const { quizId } = req.params;
-  
-    const userId = 1; 
+    const userId = req.user?.UserID; // Get user ID from authenticated request
     const quizIdNum = parseInt(quizId, 10);
 
+    // Check if user ID exists
+    if (!userId) {
+        console.log('[getQuizResultForUser] Authentication error: UserID not found on req.user.');
+        return res.status(401).json({ message: 'User not authenticated or UserID missing.' });
+    }
     if (isNaN(quizIdNum)) return res.status(400).json({ message: 'Invalid Quiz ID format.' });
-    if (!userId) return res.status(401).json({ message: 'User not authenticated.' });
+
 
     console.log(`[getQuizResult] Fetching result for User ${userId}, Quiz ${quizIdNum}`);
     try {
@@ -362,10 +369,7 @@ exports.getQuizResultForUser = async (req, res, next) => {
         });
     } catch (err) {
          console.error(`--- ERROR in getQuizResultForUser for User ${userId}, Quiz ${quizIdNum} ---`);
-         console.error("Error Message:", err.message);
-         console.error("Error Stack:", err.stack || 'No stack available');
          console.error(`-------------------------------------------------------------------`);
          next(err);
      }
 };
-
