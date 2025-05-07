@@ -1,6 +1,5 @@
-//type for resource data
 export interface Resource {
-    ResourceID: number; //matches DB schema casing
+    ResourceID: number; 
     Title: string;
     Type: 'Past Paper' | 'Model Paper' | 'Notes' | 'Video Lecture' | 'Other';
     Subject: string;
@@ -9,4 +8,3 @@ export interface Resource {
     Description?: string | null; 
     UploadedDate?: string | null;
 }
-
