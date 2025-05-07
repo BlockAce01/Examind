@@ -7,4 +7,5 @@ export interface Resource {
     FileURL: string;
     Description?: string | null; 
     UploadedDate?: string | null; 
+    //add any other fields 
 }
