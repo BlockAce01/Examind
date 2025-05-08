@@ -3,7 +3,6 @@ const db = require('../config/db');
 //get all forum topics
 exports.getAllForums = async (req, res, next) => {
     try {
-        //join with user table 
         const query = `
             SELECT 
                 "DiscussionForum".*,
@@ -31,7 +30,6 @@ exports.getAllForums = async (req, res, next) => {
 exports.getForumById = async (req, res, next) => {
     const { forumId } = req.params;
     try {
-        //join with the user table 
         const query = `
             SELECT 
                 "DiscussionForum".*,
@@ -110,7 +108,7 @@ exports.updateForum = async (req, res, next) => {
             WHERE "ForumID" = $3
             RETURNING *;
         `;
-        const values = [Topic, Description, forumId]; //pass undefined/null for not updated fields
+        const values = [Topic, Description, forumId]; //pass undefined or null 
 
         const { rows } = await db.query(query, values);
 
@@ -130,7 +128,7 @@ exports.updateForum = async (req, res, next) => {
     }
 };
 
-// delete forum topic
+//delete forum topic
 exports.deleteForum = async (req, res, next) => {
     const { forumId } = req.params;
     try {

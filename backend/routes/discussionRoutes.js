@@ -4,33 +4,32 @@ const discussionController = require('../controllers/discussionController.js');
 const postController = require('../controllers/postController'); //for fetching posts
 const { protect, restrictTo } = require('../middleware/authMiddleware'); //import middleware
 
-// forum topic routes
+//forum topic routes
 
 //get all forum topics 
 router.get('/', discussionController.getAllForums);
 
-//get single forum topic 
+//get single forum topic
 router.get('/:forumId', discussionController.getForumById);
 
-//create new forum topic 
+//create a new forum topic
 router.post('/', protect, discussionController.createForum);
 
-//update forum topic
+//update a forum topic
 router.put('/:forumId', protect, restrictTo('admin', 'teacher'), discussionController.updateForum);
 
-//delete forum topic
+//delete a forum topic 
 router.delete('/:forumId', protect, restrictTo('admin', 'teacher'), discussionController.deleteForum);
 
-//post routes
+//post routes 
 
 //get all posts 
 router.get('/:forumId/posts', postController.getPostsByForumId);
 
-//create a new post  
+//create a new post
 router.post('/:forumId/posts', protect, postController.createPost);
 
-
-//upvote  post
+//upvote a post
 router.post('/:postId/upvote', protect, postController.upvotePost);
 
 
