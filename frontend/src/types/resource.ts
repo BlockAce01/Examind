@@ -9,3 +9,4 @@ export interface Resource {
     Description?: string | null; 
     UploadedDate?: string | null;
 }
+
