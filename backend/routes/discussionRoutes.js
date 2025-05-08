@@ -33,5 +33,4 @@ router.post('/:forumId/posts', protect, postController.createPost);
 //upvote  post
 router.post('/:postId/upvote', protect, postController.upvotePost);
 
-
 module.exports = router;
