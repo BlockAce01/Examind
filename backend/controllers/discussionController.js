@@ -97,7 +97,7 @@ exports.updateForum = async (req, res, next) => {
     const { forumId } = req.params;
     const { Topic, Description } = req.body;
 
-    if (!Topic && !Description) { //must provide at least one field
+    if (!Topic && !Description) { 
         return res.status(400).json({ message: 'No update data provided (Topic or Description).' });
     }
 
@@ -110,8 +110,7 @@ exports.updateForum = async (req, res, next) => {
             WHERE "ForumID" = $3
             RETURNING *;
         `;
-        const values = [Topic, Description, forumId]; //pass undefined/null for not updated fields
-
+        const values = [Topic, Description, forumId]; 
         const { rows } = await db.query(query, values);
 
         if (rows.length === 0) {
