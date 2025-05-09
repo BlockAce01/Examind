@@ -7,6 +7,8 @@ import Button from '@/components/ui/Button';
 import Spinner from '@/components/ui/Spinner';
 import { useAuth } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import QuizResultChatbot from '@/components/quiz/QuizResultChatbot';
+import { CheckIcon, XMarkIcon } from '@heroicons/react/24/solid';
 
 // define type for individual question data from API
 interface Question {
@@ -24,6 +26,7 @@ interface QuizResultData {
     totalQuestions: number;
     submissionTime: string;
     questions: Question[];
+    quizId: number;
 }
 
 export default function QuizResultsPageWrapper() {
@@ -44,6 +47,7 @@ function QuizResultsPageContent() {
     const [result, setResult] = useState<QuizResultData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [selectedQuestions, setSelectedQuestions] = useState<Question[]>([]);
 
     useEffect(() => {
         //validate quizId and authentication
@@ -81,13 +85,19 @@ function QuizResultsPageContent() {
 
                 const data = await response.json();
                 if (data.status === 'success' && data.data) {
-                    setResult(data.data); //set the fetched result data
+                    // Add quizId to the result data before setting state
+                    setResult({ ...data.data, quizId: quizIdNum }); // Set the fetched result data
                 } else {
                     throw new Error(data.message || 'Invalid result data format received from API.');
                 }
             } catch (err: any) {
                 console.error("Fetch Result Error:", err);
-                setError(err.message || 'Could not load quiz results.');
+                // Check if the error is due to the user not being logged in or result not found
+                if (err.message.includes('log in') || err.message.includes('Quiz result not found')) {
+                     setError(err.message);
+                } else {
+                    setError(err.message || 'Could not load quiz results.');
+                }
             } finally {
                 setIsLoading(false);
             }
@@ -118,6 +128,22 @@ function QuizResultsPageContent() {
          );
     }
 
+    // Handle question selection
+    const handleQuestionSelect = (question: Question, isSelected: boolean) => {
+        setSelectedQuestions(prevSelected => {
+            if (isSelected) {
+                // Add question if not already selected
+                if (!prevSelected.find(q => q.QuestionID === question.QuestionID)) {
+                    return [...prevSelected, question];
+                }
+            } else {
+                // Remove question if deselected
+                return prevSelected.filter(q => q.QuestionID !== question.QuestionID);
+            }
+            return prevSelected; // Return current state if no change
+        });
+    };
+
     //render the results
     if (result) {
         const percentage = result.totalQuestions > 0 ? Math.round((result.score / result.totalQuestions) * 100) : 0;
@@ -144,9 +170,19 @@ function QuizResultsPageContent() {
                         <ul className="space-y-6">
                             {result.questions.map((question, index) => (
                                 <li key={question.QuestionID} className="bg-white p-5 rounded-lg shadow border border-gray-200">
-                                    <p className="font-medium text-lg mb-3 text-gray-800">
-                                        Question {index + 1}: {question.Text}
-                                    </p>
+                                    <div className="flex items-start mb-3">
+                                        {/* Checkbox for selection */}
+                                        <input
+                                            type="checkbox"
+                                            id={`select-q-${question.QuestionID}`}
+                                            checked={selectedQuestions.some(q => q.QuestionID === question.QuestionID)}
+                                            onChange={(e) => handleQuestionSelect(question, e.target.checked)}
+                                            className="mr-3 mt-1 w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                                        />
+                                        <label htmlFor={`select-q-${question.QuestionID}`} className="font-medium text-lg text-gray-800 flex-1 cursor-pointer">
+                                            Question {index + 1}: {question.Text}
+                                        </label>
+                                    </div>
                                     <ul className="space-y-2">
                                         {question.Options.map((option, optionIndex) => {
                                             const isCorrect = optionIndex === question.CorrectAnswerIndex;
@@ -189,6 +225,12 @@ function QuizResultsPageContent() {
                     ) : (
                         <p className="text-gray-600">No questions available for review.</p>
                     )}
+                </div>
+
+                 {/*AI assistant section*/}
+                <div className="mt-10">
+                    <h2 className="text-2xl font-semibold mb-4 text-gray-700 border-b pb-2">AI Assistant</h2>
+                    <QuizResultChatbot selectedQuestions={selectedQuestions} quizTitle={result.quizTitle} quizId={result.quizId} />
                 </div>
 
                 {/*Nav Buttons*/}
