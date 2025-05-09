@@ -29,6 +29,9 @@ app.use('/api/v1/resources', require('./routes/resourceRoutes'));
 app.use('/api/v1/discussions', require('./routes/discussionRoutes'));
 //user routes(for admin)
 
+// AI Chat routes
+app.use('/api/ai-chat', require('./routes/aiChatRoutes'));
+
 
 
 // routes for Testing

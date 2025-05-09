@@ -28,27 +28,40 @@ const QuizResultChatbot: React.FC<QuizResultChatbotProps> = ({ selectedQuestions
         setIsLoading(true);
         setChatbotResponse(null);
 
-        // simulate sending data to a backend API
-        console.log("Sending selected questions for explanation:", selectedQuestions);
-        console.log("Quiz Title:", quizTitle);
-        console.log("Quiz ID:", quizId);
+         try {
+            const response = await fetch('/api/ai-chat/explanation', { // Assuming backend runs on the same host/port or proxied
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    quizTitle,
+                    selectedQuestions, // quizId is not sent as per plan, n8n doesn't need it
+                }),
+            });
 
-        // TODO: replace with actual API call to your backend
-        await new Promise(resolve => setTimeout(resolve, 1500));
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
 
-        // simulate a response from the AI
-        let simulatedExplanation = `Explanation for selected question(s) from Quiz "${quizTitle}":\n\n`;
+            const data = await response.json();
+            let explanation = data.explanation;
 
-        selectedQuestions.forEach(q => {
-            simulatedExplanation += `Question: ${q.Text}\n`;
-            simulatedExplanation += `Correct Answer: ${q.Options[q.CorrectAnswerIndex]}\n`;
-            simulatedExplanation += `Your Answer: ${q.SubmittedAnswerIndex !== null ? q.Options[q.SubmittedAnswerIndex] : 'Not Answered'}\n\n`;
-            simulatedExplanation += "This is a simulated explanation based on the question details. The actual AI explanation would provide a step-by-step breakdown of how to arrive at the correct answer.\n\n---\n\n";
-        });
+            // Ensure single backslashes for LaTeX commands if n8n might return double backslashes.
+            if (explanation) {
+                explanation = explanation.replace(/\\\\/g, '\\');
+            }
+            
+            console.log("Explanation received in frontend:", explanation); // <--- ADD THIS LINE
+            setChatbotResponse(explanation);
 
-
-        setChatbotResponse(simulatedExplanation);
-        setIsLoading(false);
+        } catch (error) {
+            console.error("Failed to get explanation:", error);
+            setChatbotResponse(`Error getting explanation: ${error instanceof Error ? error.message : String(error)}`);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -69,7 +82,8 @@ const QuizResultChatbot: React.FC<QuizResultChatbotProps> = ({ selectedQuestions
             {/* assistant interaction area */}
             <div className="mt-4 p-3 bg-white border rounded whitespace-pre-wrap">
                 {isLoading && <p className="text-gray-500">Loading explanation...</p>}
-                {chatbotResponse && <p>{chatbotResponse}</p>}
+                {/* Temporarily simplified rendering to debug */}
+                {chatbotResponse && <pre style={{ color: 'black', backgroundColor: 'lightgray', padding: '10px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{chatbotResponse}</pre>}
                 {!isLoading && !chatbotResponse && selectedQuestions.length === 0 && (
                      <p className="text-gray-500">Chatbot responses will appear here.</p>
                 )}
