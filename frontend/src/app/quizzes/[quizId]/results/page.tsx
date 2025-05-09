@@ -8,12 +8,22 @@ import Spinner from '@/components/ui/Spinner';
 import { useAuth } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
+// define type for individual question data from API
+interface Question {
+    QuestionID: number;
+    Text: string;
+    Options: string[];
+    CorrectAnswerIndex: number;
+    SubmittedAnswerIndex: number | null;
+}
+
 //define type for result data fetched from API
 interface QuizResultData {
     quizTitle: string;
     score: number;
     totalQuestions: number;
     submissionTime: string;
+    questions: Question[];
 }
 
 export default function QuizResultsPageWrapper() {
@@ -127,12 +137,62 @@ function QuizResultsPageContent() {
                     </p>
                 </div>
 
-                <div className="bg-yellow-50 p-4 rounded border border-yellow-200 text-sm text-yellow-800 mb-6">
-                    Note: Detailed answer review section requires further implementation on the backend to provide necessary data.
+                {/* Detailed Answers Review */}
+                <div className="mt-10">
+                    <h2 className="text-2xl font-semibold mb-6 text-gray-700 border-b pb-2">Answer Review</h2>
+                    {result.questions && result.questions.length > 0 ? (
+                        <ul className="space-y-6">
+                            {result.questions.map((question, index) => (
+                                <li key={question.QuestionID} className="bg-white p-5 rounded-lg shadow border border-gray-200">
+                                    <p className="font-medium text-lg mb-3 text-gray-800">
+                                        Question {index + 1}: {question.Text}
+                                    </p>
+                                    <ul className="space-y-2">
+                                        {question.Options.map((option, optionIndex) => {
+                                            const isCorrect = optionIndex === question.CorrectAnswerIndex;
+                                            const isSubmitted = optionIndex === question.SubmittedAnswerIndex;
+                                            const isIncorrectSubmitted = isSubmitted && !isCorrect;
+
+                                            return (
+                                                <li
+                                                    key={optionIndex}
+                                                    className={`
+                                                        p-3 rounded border
+                                                        ${isCorrect
+                                                            ? 'bg-green-100 border-green-300 text-green-800 font-semibold' // Correct answer
+                                                            : isIncorrectSubmitted
+                                                                ? 'bg-red-100 border-red-300 text-red-800 font-semibold' // Incorrect submitted answer
+                                                                : 'bg-gray-50 border-gray-200 text-gray-700' // Unselected or correct submitted
+                                                        }
+                                                    `}
+                                                >
+                                                    {option}
+                                                    {isCorrect && <CheckIcon className="inline-block w-5 h-5 ml-2 text-green-600" />}
+                                                    {isIncorrectSubmitted && <XMarkIcon className="inline-block w-5 h-5 ml-2 text-red-600" />}
+                                                    {isSubmitted && !isIncorrectSubmitted && !isCorrect && (
+                                                         // This case is for when the user submitted an answer, but it wasn't the correct one,
+                                                         // and it's not the incorrect submitted case (which is handled above).
+                                                         // This might happen if the user submitted the correct answer, which is already handled by the isCorrect check.
+                                                         // Adding this for completeness, though it might not render in typical scenarios.
+                                                         <span className="ml-2 text-gray-600">(Your Answer)</span>
+                                                    )}
+                                                     {isSubmitted && isCorrect && (
+                                                         <span className="ml-2 text-green-600">(Your Answer)</span>
+                                                     )}
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p className="text-gray-600">No questions available for review.</p>
+                    )}
                 </div>
 
                 {/*Nav Buttons*/}
-                <div className="mt-8 text-center">
+                <div className="mt-10 text-center">
                     <Link href="/quizzes"> <Button variant="secondary" className="mr-4">Back to Quizzes</Button> </Link>
                     <Link href="/dashboard"> <Button variant="primary">Go to Dashboard</Button> </Link>
                 </div>
