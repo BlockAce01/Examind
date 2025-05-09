@@ -232,3 +232,18 @@ ALTER TABLE public."Takes"
     ON DELETE CASCADE;
 CREATE INDEX IF NOT EXISTS idx_takes_userid
     ON public."Takes"("UserID");
+
+
+CREATE TABLE "UserAnswers" (
+    "UserID" INT NOT NULL,
+    "QuizID" INT NOT NULL,
+    "QuestionID" INT NOT NULL,
+    "SubmittedAnswerIndex" INT,
+    "SubmissionTime" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY ("UserID", "QuizID", "QuestionID"),
+    FOREIGN KEY ("UserID") REFERENCES "User"("UserID") ON DELETE CASCADE,
+    FOREIGN KEY ("QuizID") REFERENCES "Quiz"("QuizID") ON DELETE CASCADE,
+    FOREIGN KEY ("QuestionID") REFERENCES "Question"("QuestionID") ON DELETE CASCADE
+);
+CREATE INDEX "idx_useranswers_quiz_user" ON "UserAnswers" ("QuizID", "UserID");
+CREATE INDEX "idx_useranswers_question" ON "UserAnswers" ("QuestionID");
