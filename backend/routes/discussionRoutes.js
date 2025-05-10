@@ -1,35 +1,36 @@
 const express = require('express');
 const router = express.Router();
 const discussionController = require('../controllers/discussionController.js');
-const postController = require('../controllers/postController'); 
-const { protect, restrictTo } = require('../middleware/authMiddleware');
+//const postController = require('../controllers/postController'); //for fetching posts
+const { protect, restrictTo } = require('../middleware/authMiddleware'); //import middleware
 
-// Forum Topic Routes
+//forum topic routes
 
-//  Get all forum topics (public)
+//get all forum topics 
 router.get('/', discussionController.getAllForums);
 
-// forumId  Get a single forum topic (public)
+//get single forum topic
 router.get('/:forumId', discussionController.getForumById);
 
-// Create a new forum topic (Any logged-in user)
+//create a new forum topic
 router.post('/', protect, discussionController.createForum);
 
-// forumId  Update a forum topic (Admin/Teacher only)
+//update a forum topic
 router.put('/:forumId', protect, restrictTo('admin', 'teacher'), discussionController.updateForum);
 
-// forumId  Delete a forum topic (Admin/Teacher only)
+//delete a forum topic 
 router.delete('/:forumId', protect, restrictTo('admin', 'teacher'), discussionController.deleteForum);
 
-// Post Routes
+//post routes 
 
-// forumId/posts  Get all posts for a specific forum (public)
-router.get('/:forumId/posts', postController.getPostsByForumId);
+//get all posts 
+//router.get('/:forumId/posts', postController.getPostsByForumId);
 
-// forumId/posts  Create a new post in a specific forum (Any logged-in user)
-router.post('/:forumId/posts', protect, postController.createPost);
+//create a new post
+//router.post('/:forumId/posts', protect, postController.createPost);
 
-router.post('/:postId/upvote', protect, postController.upvotePost);
+//upvote a post
+//router.post('/:postId/upvote', protect, postController.upvotePost);
 
 
 module.exports = router;

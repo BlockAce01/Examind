@@ -1,8 +1,9 @@
 const db = require('../config/db');
 
+//get all forum topics
 exports.getAllForums = async (req, res, next) => {
     try {
-        // Include the creator's name by joining with the "User" table
+        //join with user table
         const query = `
             SELECT 
                 "DiscussionForum".*,
@@ -26,11 +27,11 @@ exports.getAllForums = async (req, res, next) => {
     }
 };
 
-// Get Single Forum Topic by ID
+//get single forum topic
 exports.getForumById = async (req, res, next) => {
     const { forumId } = req.params;
     try {
-        // Include the creator's name by joining with the "User" table
+        //join with user table 
         const query = `
             SELECT 
                 "DiscussionForum".*,
@@ -59,18 +60,18 @@ exports.getForumById = async (req, res, next) => {
     }
 };
 
-// Create New Forum Topic
+//create new forum topic
 exports.createForum = async (req, res, next) => {
-    
+
     const { Topic, Description } = req.body;
-   // Get the user ID from the authentication middleware (to be added later)
+     //get user ID 
 
     if (!Topic) {
         return res.status(400).json({ message: 'Missing required field: Topic' });
     }
 
     try {
-        const creatorUserId = req.user?.UserID; // Get user ID from auth middleware
+        const creatorUserId = req.user?.UserID; //get user ID from auth middleware
 
         const query = `
             INSERT INTO "DiscussionForum" ("Topic", "Description", "LastActivity", "CreatorUserID")
@@ -92,17 +93,17 @@ exports.createForum = async (req, res, next) => {
     }
 };
 
-// Update Forum Topic
+//update forum topic
 exports.updateForum = async (req, res, next) => {
     const { forumId } = req.params;
     const { Topic, Description } = req.body;
 
-    if (!Topic && !Description) { 
+    if (!Topic && !Description) { //must provide at least one field 
         return res.status(400).json({ message: 'No update data provided (Topic or Description).' });
     }
 
     try {
-      
+        //fetch current data first 
         const query = `
             UPDATE "DiscussionForum"
             SET "Topic" = COALESCE($1, "Topic"),       -- Only update if value is provided
@@ -110,7 +111,7 @@ exports.updateForum = async (req, res, next) => {
             WHERE "ForumID" = $3
             RETURNING *;
         `;
-        const values = [Topic, Description, forumId]; 
+        const values = [Topic, Description, forumId]; //pass undefined or null 
 
         const { rows } = await db.query(query, values);
 
@@ -130,12 +131,11 @@ exports.updateForum = async (req, res, next) => {
     }
 };
 
-// Delete Forum Topic
+//delete forum topic
 exports.deleteForum = async (req, res, next) => {
     const { forumId } = req.params;
     try {
-       // This only deletes the user, not their posts. The posts will stay but have no owner.
-      // If you want the posts to be deleted too, you need to set it up to delete them automatically or do it yourself.
+        //add CASCADE or handle post deletion
         const query = 'DELETE FROM "DiscussionForum" WHERE "ForumID" = $1 RETURNING *;';
         const { rows } = await db.query(query, [forumId]);
 
