@@ -86,7 +86,7 @@ export default function EditQuizPage() {
     useEffect(() => {
         fetchQuizData();
        
-    }, [quizIdNum, token]); /
+    }, [quizIdNum, token]);
 
     // handle quiz detail update
     const handleQuizDetailSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -142,7 +142,8 @@ export default function EditQuizPage() {
             setQuizDetailError(err.message || 'Failed to update quiz details.'); 
             console.error("Quiz Detail Update Error:", err);
         } finally {
-            setIsUpdatingQuiz(false); 
+            setIsUpdatingQuiz(false);
+        }
     };
 
     // question action handlers 
@@ -293,7 +294,7 @@ export default function EditQuizPage() {
                  <div className="flex justify-between items-center border-b pb-2 mb-4">
                     <h2 className="text-lg font-semibold">Manage Questions ({questions.length})</h2>
                      {!showQuestionForm && (
-                        <Button variant='secondary' size='sm' onClick={handleAddNewQuestionClick} disabled={isSavingQuestion}>
+                        <Button variant='secondary' onClick={handleAddNewQuestionClick} disabled={isSavingQuestion}>
                             <PlusIcon className="w-4 h-4 mr-1 inline-block"/> Add Question
                         </Button>
                      )}
@@ -332,10 +333,10 @@ export default function EditQuizPage() {
                                      </ul>
                                  </div>
                                  <div className="flex-shrink-0 space-x-2"> {/* Removed ml-4 */}
-                                     <Button variant="secondary" size="sm" className="px-2 py-1 text-xs" onClick={() => handleEditQuestionClick(q)} title="Edit Question" disabled={showQuestionForm}> {/* Disable if form open */}
+                                     <Button variant="secondary" className="px-2 py-1 text-xs" onClick={() => handleEditQuestionClick(q)} title="Edit Question" disabled={showQuestionForm}> {/* Disable if form open */}
                                          <PencilSquareIcon className="w-4 h-4"/>
                                      </Button>
-                                     <Button variant="danger" size="sm" className="px-2 py-1 text-xs" onClick={() => handleDeleteQuestion(q.QuestionID, q.Text)} title="Delete Question" disabled={showQuestionForm}> {/* Disable if form open */}
+                                     <Button variant="secondary" className="px-2 py-1 text-xs text-red-600 border border-red-600 hover:bg-red-100" onClick={() => handleDeleteQuestion(q.QuestionID, q.Text)} title="Delete Question" disabled={showQuestionForm}> {/* Disable if form open */}
                                          <TrashIcon className="w-4 h-4"/>
                                      </Button>
                                  </div>
