@@ -32,6 +32,7 @@ function QuizTakePageContent() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [timeLeft, setTimeLeft] = useState<number | null>(null); // timer
 
     //effects
     useEffect(() => {
@@ -73,6 +74,7 @@ function QuizTakePageContent() {
                 if (data.status === 'success' && data.data?.quiz) {
                     setQuiz(data.data.quiz);
                     setSelectedAnswers(Array(data.data.quiz.questions?.length || 0).fill(null));
+                    setTimeLeft(data.data.quiz.TimeLimit * 60); // timer with time left in seconds
                 } else {
                     throw new Error(data.message || 'Invalid quiz data format.');
                 }
@@ -84,6 +86,26 @@ function QuizTakePageContent() {
         };
         fetchQuizDetails();
     }, [quizIdNum, token]); //add token to dependency array
+
+    // timer logic
+    useEffect(() => {
+        if (timeLeft === null || timeLeft <= 0 || isSubmitting) return;
+
+        const timerId = setInterval(() => {
+            setTimeLeft((prevTime) => {
+                if (prevTime === null) return null;
+                if (prevTime <= 1) {
+                    clearInterval(timerId);
+                    finishQuiz(); // auto-submit when times up
+                    alert("Time is over!"); // alert to user
+                    return 0;
+                }
+                return prevTime - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timerId);
+    }, [timeLeft, isSubmitting]); // stop timer when submitting
 
     //event handlers
     const handleAnswerSelect = (optionIndex: number) => {
@@ -165,6 +187,12 @@ function QuizTakePageContent() {
             )}
 
             <h1 className="text-2xl md:text-3xl font-bold mb-2 text-gray-800">{quiz.Title}</h1>
+            {/*display timer*/}
+            {timeLeft !== null && (
+                <div className="text-lg font-semibold text-gray-700 mb-4">
+                    Time Left: {Math.floor(timeLeft / 60).toString().padStart(2, '0')}:{(timeLeft % 60).toString().padStart(2, '0')}
+                </div>
+            )}
             <p className="text-gray-600 mb-6">Question {currentQuestionIndex + 1} of {quiz.questions?.length || 0}</p>
 
             {/*question display*/}
