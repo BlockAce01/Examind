@@ -1,5 +1,5 @@
 const db = require('../config/db');
-const pool = require('../config/db').pool; // Import the pool for transactions
+const pool = require('../config/db').pool; // pool for transactions
 
 // function to get all quizzes with their question count
 exports.getAllQuizzes = async (req, res, next) => {
@@ -31,8 +31,8 @@ exports.getAllQuizzes = async (req, res, next) => {
             },
         });
     } catch (err) {
-        // Log the error if the query fails
-        console.error('Error fetching quizzes:', err.stack || err); // Log the full error stack
+        //log the error if the query fails
+        console.error('Error fetching quizzes:', err.stack || err);
         next(err);
     }
 };
@@ -244,7 +244,7 @@ exports.submitQuiz = async (req, res, next) => {
     const { quizId } = req.params; 
     const { answers } = req.body; 
    
-    const userId = 1; 
+    const userId = req.user.UserID;
 
     if (!userId) { return res.status(401).json({ message: 'User not authenticated.' }); }
     const quizIdNum = parseInt(quizId, 10);
@@ -341,51 +341,72 @@ exports.getQuizResultForUser = async (req, res, next) => {
     const userId = req.user.UserID;
     const quizIdNum = parseInt(quizId, 10);
 
-    // Check if user ID exists
-    if (!userId) {
-        console.log('[getQuizResultForUser] Authentication error: UserID not found on req.user.');
-        return res.status(401).json({ message: 'User not authenticated or UserID missing.' });
-    }
-    if (isNaN(quizIdNum)) return res.status(400).json({ message: 'Invalid Quiz ID format.' });
-
-    console.log(`[getQuizResult] Fetching result for User ${userId}, Quiz ${quizIdNum}`);
+    console.log(`[getQuizResultForUser] Attempting to fetch result for User ${userId}, Quiz ${quizIdNum}`);
     try {
-        const quizQuery = 'SELECT "Title", (SELECT COUNT(*) FROM "Question" WHERE "QuizID" = $1)::int AS "totalQuestions" FROM "Quiz" WHERE "QuizID" = $1';
-        const quizRes = await db.query(quizQuery, [quizIdNum]);
-        if (quizRes.rows.length === 0) {
-             console.log(`[getQuizResult] Quiz ${quizIdNum} not found.`);
+        // fetch quiz details and user's resuls
+        const resultQuery = `
+            SELECT
+                q."QuizID",
+                q."Title",
+                (SELECT COUNT(*) FROM "Question" WHERE "QuizID" = q."QuizID")::int AS "totalQuestions",
+                t."MarksObtained",
+                t."SubmissionTime"
+            FROM "Quiz" q
+            LEFT JOIN "Takes" t ON q."QuizID" = t."QuizID" AND t."UserID" = $2
+            WHERE q."QuizID" = $1;
+        `;
+        const resultRes = await db.query(resultQuery, [quizIdNum, userId]);
+
+        if (resultRes.rows.length === 0) {
+             console.log(`[getQuizResultForUser] Quiz ${quizIdNum} not found.`);
              return res.status(404).json({ message: 'Quiz not found.' });
         }
 
-        const takesQuery = 'SELECT "MarksObtained", "SubmissionTime" FROM "Takes" WHERE "UserID" = $1 AND "QuizID" = $2';
-        const takesRes = await db.query(takesQuery, [userId, quizIdNum]);
-        if (takesRes.rows.length === 0) {
-            console.log(`[getQuizResult] No result found for User ${userId}, Quiz ${quizIdNum}.`);
-            return res.status(404).json({ message: 'Result not found for this user and quiz.' });
+        const quizData = resultRes.rows[0];
+        const resultFound = quizData.MarksObtained !== null; // check if MarksObtained exists
+
+        let questions = [];
+        if (resultFound) {
+            // when result was found, fetch associated questions and user answers
+            console.log(`[getQuizResultForUser] Result found. Fetching questions and user answers for QuizID: ${quizIdNum}`);
+            const questionsQuery = `
+                SELECT q."QuestionID", q."Text", q."Options", q."CorrectAnswerIndex", ua."SubmittedAnswerIndex"
+                FROM "Question" q
+                LEFT JOIN "UserAnswers" ua ON q."QuestionID" = ua."QuestionID" AND ua."UserID" = $2 AND ua."QuizID" = $1
+                WHERE q."QuizID" = $1
+                ORDER BY q."QuestionID" ASC;
+            `;
+            const questionsResult = await db.query(questionsQuery, [quizIdNum, userId]);
+            questions = questionsResult.rows;
+            console.log(`[getQuizResultForUser] Questions query completed. Row count: ${questions.length}`);
+        } else {
+             // when result found, just fetch the questions for review
+             console.log(`[getQuizResultForUser] No result found for User ${userId}, Quiz ${quizIdNum}. Fetching questions for review.`);
+             const questionsQuery = `
+                 SELECT "QuestionID", "Text", "Options", "CorrectAnswerIndex"
+                 FROM "Question"
+                 WHERE "QuizID" = $1
+                 ORDER BY "QuestionID" ASC;
+             `;
+             const questionsResult = await db.query(questionsQuery, [quizIdNum]);
+             questions = questionsResult.rows;
+             console.log(`[getQuizResultForUser] Questions for review query completed. Row count: ${questions.length}`);
         }
 
-        // fetch associated questions
-        console.log(`[getQuizResult] Fetching questions for QuizID: ${quizIdNum}`);
-        const questionsQuery = `
-            SELECT q."QuestionID", q."Text", q."Options", q."CorrectAnswerIndex", ua."SubmittedAnswerIndex"
-            FROM "Question" q
-            LEFT JOIN "UserAnswers" ua ON q."QuestionID" = ua."QuestionID" AND ua."UserID" = $2 AND ua."QuizID" = $1
-            WHERE q."QuizID" = $1
-            ORDER BY q."QuestionID" ASC;
-        `;
-        const questionsResult = await db.query(questionsQuery, [quizIdNum, userId]);
-        console.log(`[getQuizResult] Questions query completed. Row count: ${questionsResult.rows.length}`);
-        console.log(`[getQuizResult] Result found. Sending success response.`);
+
+        console.log(`[getQuizResultForUser] Sending success response. Result found: ${resultFound}`);
         res.status(200).json({
             status: 'success',
             data: {
-                quizTitle: quizRes.rows[0].Title,
-                score: takesRes.rows[0].MarksObtained,
-                totalQuestions: quizRes.rows[0].totalQuestions, // already integer from DB cast
-                submissionTime: takesRes.rows[0].SubmissionTime,
-                questions: questionsResult.rows // include the questions array with submitted answers
+                quizTitle: quizData.Title,
+                totalQuestions: quizData.totalQuestions,
+                resultFound: resultFound,
+                score: resultFound ? quizData.MarksObtained : null,
+                submissionTime: resultFound ? quizData.SubmissionTime : null,
+                questions: questions
             }
         });
+
     } catch (err) {
          console.error(`--- ERROR in getQuizResultForUser for User ${userId}, Quiz ${quizIdNum} ---`);
          console.error("Error Message:", err.message);
