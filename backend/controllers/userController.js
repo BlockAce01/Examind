@@ -42,7 +42,7 @@ exports.updateUser = async (req, res, next) => {
 
     // Validate input (Role must be valid, etc.)
     const validRoles = ['student', 'teacher', 'admin'];
-     const validStatuses = ['free', 'premium', 'pending', 'cancelled']; 
+     const validStatuses = ['free', 'premium', 'pending', 'cancelled'];
 
     if (Role && !validRoles.includes(Role)) {
          return res.status(400).json({ message: 'Invalid Role specified.'});
@@ -90,6 +90,21 @@ exports.deleteUser = async (req, res, next) => {
             return res.status(404).json({ message: 'User not found' });
         }
         res.status(204).json({ status: 'success', data: null });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// get ranked users for leaderboard
+exports.getRankedUsers = async (req, res, next) => {
+    try {
+        const query = 'SELECT "UserID", "Name", "Points" FROM "User" WHERE "Role" = \'student\' ORDER BY "Points" DESC';
+        const { rows } = await db.query(query);
+        res.status(200).json({
+            status: 'success',
+            results: rows.length,
+            data: { users: rows },
+        });
     } catch (err) {
         next(err);
     }
