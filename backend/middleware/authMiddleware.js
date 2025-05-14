@@ -1,9 +1,10 @@
 const jwt = require('jsonwebtoken');
-const db = require('../config/db'); //connect to database
-require('dotenv').config(); //load environment variables
+const db = require('../config/db');
+require('dotenv').config();
 
 //verify JWT
 exports.protect = async (req, res, next) => {
+    console.log('Executing protect middleware...');
     let token;
 
     //check for authorization header
@@ -26,9 +27,12 @@ exports.protect = async (req, res, next) => {
             throw new Error('Server configuration error.');
         }
         const decoded = jwt.verify(token, secret);
+        console.log('JWT decoded successfully. Decoded payload:', decoded);
+        console.log('Querying database for user with ID:', decoded.userId); 
 
         //check user availability
         const currentUserQuery = await db.query('SELECT * FROM "User" WHERE "UserID" = $1', [decoded.userId]);
+        console.log('Current user found:', currentUserQuery.rows[0]);
         const currentUser = currentUserQuery.rows[0];
 
         if (!currentUser) {
@@ -37,8 +41,9 @@ exports.protect = async (req, res, next) => {
 
         //attach user to request object
         const { Password, ...userWithoutPassword } = currentUser;
-        req.user = userWithoutPassword; 
-        next(); //continue 
+        req.user = userWithoutPassword;
+        console.log('User attached to request object:', req.user); 
+        next(); //continue
 
     } catch (err) {
         console.error('Auth Middleware Error:', err.name, err.message);
@@ -56,11 +61,11 @@ exports.protect = async (req, res, next) => {
 //allow access based on user roles
 exports.restrictTo = (...roles) => {
     return (req, res, next) => {
-        
+
         const userRole = req.user?.Role; //get user's role
 
         if (!userRole || !roles.includes(userRole)) {
-            return res.status(403).json({ 
+            return res.status(403).json({
                 status: 'fail',
                 message: 'You do not have permission to perform this action.'
             });
