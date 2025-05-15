@@ -1,6 +1,6 @@
 const db = require('../config/db');
 
-//get posts for a Speciifc Forum
+//get posts for a speciifc forum
 exports.getPostsByForumId = async (req, res, next) => {
     const { forumId } = req.params;
     try {
