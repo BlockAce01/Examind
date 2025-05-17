@@ -27,14 +27,14 @@ app.use('/api/v1/quizzes', require('./routes/quizRoutes'));
 app.use('/api/v1/resources', require('./routes/resourceRoutes'));
 //discussion routes
 app.use('/api/v1/discussions', require('./routes/discussionRoutes'));
-//user routes(for admin)
-
+//user routes(admin)
+app.use('/api/v1/users', require('./routes/userRoutes'));
 // AI Chat routes
 app.use('/api/ai-chat', require('./routes/aiChatRoutes'));
 
 
 
-// routes for Testing
+// routes for testing
 app.get('/', (req, res) => {
   res.send('Examind Backend API is running!');
 });
