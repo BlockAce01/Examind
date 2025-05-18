@@ -1,11 +1,9 @@
 const db = require('../config/db');
-const pool = require('../config/db').pool; 
+const pool = require('../config/db').pool; // pool for transactions
 
-
-// Function to get all quizzes with their question count
+// function to get all quizzes with their question count
 exports.getAllQuizzes = async (req, res, next) => {
     try {
-        
         const query = `
             SELECT
                 q."QuizID",
@@ -33,8 +31,8 @@ exports.getAllQuizzes = async (req, res, next) => {
             },
         });
     } catch (err) {
-        // Log the error if the query fails
-        console.error('Error fetching quizzes:', err.stack || err); // Log the full error stack
+        //log the error if the query fails
+        console.error('Error fetching quizzes:', err.stack || err);
         next(err);
     }
 };
@@ -42,7 +40,6 @@ exports.getAllQuizzes = async (req, res, next) => {
 //get a specific quiz by ID along with its associated questions
 exports.getQuizByIdWithQuestions = async (req, res, next) => {
     const { id } = req.params;
-   
     const quizIdNum = parseInt(id, 10);
     if (isNaN(quizIdNum)) {
         console.log(`[getQuizByIdWithQuestions] Invalid ID parameter received: ${id}`);
@@ -62,8 +59,6 @@ exports.getQuizByIdWithQuestions = async (req, res, next) => {
         }
         const quiz = quizResult.rows[0];
         console.log(`[getQuizByIdWithQuestions] Quiz details fetched successfully.`);
-
-     
         console.log(`[getQuizByIdWithQuestions] Executing questions query for QuizID: ${quizIdNum}`);
         const questionsQuery = `
             SELECT "QuestionID", "Text", "Options", "CorrectAnswerIndex"
@@ -74,11 +69,8 @@ exports.getQuizByIdWithQuestions = async (req, res, next) => {
         const questionsResult = await db.query(questionsQuery, [quizIdNum]);
         console.log(`[getQuizByIdWithQuestions] Questions query completed. Row count: ${questionsResult.rows.length}`);
 
-        
         quiz.questions = questionsResult.rows;
         console.log(`[getQuizByIdWithQuestions] Attached ${questionsResult.rows.length} questions.`);
-
-      
         console.log(`[getQuizByIdWithQuestions] Sending 200 success response for Quiz ID: ${quizIdNum}`);
         res.status(200).json({
             status: 'success',
@@ -148,7 +140,6 @@ exports.updateQuiz = async (req, res, next) => {
         next(err);
     }
 };
-
 
 // delete a quiz and its associated questions
 exports.deleteQuiz = async (req, res, next) => {
@@ -229,7 +220,6 @@ exports.updateQuestion = async (req, res, next) => {
     }
 };
 
-
 // delete a specific question from a quiz
 exports.deleteQuestion = async (req, res, next) => {
     const { quizId, questionId } = req.params;
@@ -249,18 +239,14 @@ exports.deleteQuestion = async (req, res, next) => {
     }
 };
 
-//submit the quiz answers and calculate the score
+// submit the quiz answers and calculate the score
 exports.submitQuiz = async (req, res, next) => {
-    const { quizId } = req.params;
-    const { answers } = req.body;
-    const userId = req.user?.UserID;
+    const { quizId } = req.params; 
+    const { answers } = req.body; 
+   
+    const userId = req.user.UserID;
 
-    //check if user ID exists
-    if (!userId) {
-        console.log('[submitQuiz] Authentication error: UserID not found on req.user.');
-        return res.status(401).json({ message: 'User not authenticated or UserID missing.' });
-    }
-
+    if (!userId) { return res.status(401).json({ message: 'User not authenticated.' }); }
     const quizIdNum = parseInt(quizId, 10);
     if (isNaN(quizIdNum)) { return res.status(400).json({ message: 'Invalid Quiz ID format.' }); }
     if (!Array.isArray(answers)) { return res.status(400).json({ message: 'Invalid answers format. Expected an array.' }); }
@@ -287,6 +273,28 @@ exports.submitQuiz = async (req, res, next) => {
         });
         const totalQuestions = correctAnswers.length;
         console.log(`[submitQuiz] Score calculated: ${score} / ${totalQuestions}`);
+
+        // save user answers
+        console.log(`[submitQuiz] Saving user answers for User ${userId}, Quiz ${quizIdNum}`);
+        const userAnswerInserts = answers.map((answer, index) => {
+            const questionId = correctAnswers[index].QuestionID;
+            // handle cases when answer is null or undefined
+            const submittedAnswerIndex = (answer === null || answer === undefined) ? null : answer;
+            return `(${userId}, ${quizIdNum}, ${questionId}, ${submittedAnswerIndex})`;
+        }).join(',');
+
+        if (userAnswerInserts) {
+             const insertUserAnswersQuery = `
+                 INSERT INTO "UserAnswers" ("UserID", "QuizID", "QuestionID", "SubmittedAnswerIndex")
+                 VALUES ${userAnswerInserts}
+                 ON CONFLICT ("UserID", "QuizID", "QuestionID") DO UPDATE
+                 SET "SubmittedAnswerIndex" = EXCLUDED."SubmittedAnswerIndex", "SubmissionTime" = NOW();
+             `;
+             await client.query(insertUserAnswersQuery);
+             console.log(`[submitQuiz] User answers saved/updated in "UserAnswers" table.`);
+        } else {
+             console.log(`[submitQuiz] No user answers to save.`);
+        }
 
         console.log(`[submitQuiz] Saving result for User ${userId}, Quiz ${quizIdNum}`);
         const takesQuery = `
@@ -330,45 +338,79 @@ exports.submitQuiz = async (req, res, next) => {
 // get quiz result for a specific user
 exports.getQuizResultForUser = async (req, res, next) => {
     const { quizId } = req.params;
-    const userId = req.user?.UserID; // Get user ID from authenticated request
+    const userId = req.user.UserID;
     const quizIdNum = parseInt(quizId, 10);
 
-    // Check if user ID exists
-    if (!userId) {
-        console.log('[getQuizResultForUser] Authentication error: UserID not found on req.user.');
-        return res.status(401).json({ message: 'User not authenticated or UserID missing.' });
-    }
-    if (isNaN(quizIdNum)) return res.status(400).json({ message: 'Invalid Quiz ID format.' });
-
-
-    console.log(`[getQuizResult] Fetching result for User ${userId}, Quiz ${quizIdNum}`);
+    console.log(`[getQuizResultForUser] Attempting to fetch result for User ${userId}, Quiz ${quizIdNum}`);
     try {
-        const quizQuery = 'SELECT "Title", (SELECT COUNT(*) FROM "Question" WHERE "QuizID" = $1)::int AS "totalQuestions" FROM "Quiz" WHERE "QuizID" = $1';
-        const quizRes = await db.query(quizQuery, [quizIdNum]);
-        if (quizRes.rows.length === 0) {
-             console.log(`[getQuizResult] Quiz ${quizIdNum} not found.`);
+        // fetch quiz details and user's resuls
+        const resultQuery = `
+            SELECT
+                q."QuizID",
+                q."Title",
+                (SELECT COUNT(*) FROM "Question" WHERE "QuizID" = q."QuizID")::int AS "totalQuestions",
+                t."MarksObtained",
+                t."SubmissionTime"
+            FROM "Quiz" q
+            LEFT JOIN "Takes" t ON q."QuizID" = t."QuizID" AND t."UserID" = $2
+            WHERE q."QuizID" = $1;
+        `;
+        const resultRes = await db.query(resultQuery, [quizIdNum, userId]);
+
+        if (resultRes.rows.length === 0) {
+             console.log(`[getQuizResultForUser] Quiz ${quizIdNum} not found.`);
              return res.status(404).json({ message: 'Quiz not found.' });
         }
 
-        const takesQuery = 'SELECT "MarksObtained", "SubmissionTime" FROM "Takes" WHERE "UserID" = $1 AND "QuizID" = $2';
-        const takesRes = await db.query(takesQuery, [userId, quizIdNum]);
-        if (takesRes.rows.length === 0) {
-            console.log(`[getQuizResult] No result found for User ${userId}, Quiz ${quizIdNum}.`);
-            return res.status(404).json({ message: 'Result not found for this user and quiz.' });
+        const quizData = resultRes.rows[0];
+        const resultFound = quizData.MarksObtained !== null; // check if MarksObtained exists
+
+        let questions = [];
+        if (resultFound) {
+            // when result was found, fetch associated questions and user answers
+            console.log(`[getQuizResultForUser] Result found. Fetching questions and user answers for QuizID: ${quizIdNum}`);
+            const questionsQuery = `
+                SELECT q."QuestionID", q."Text", q."Options", q."CorrectAnswerIndex", ua."SubmittedAnswerIndex"
+                FROM "Question" q
+                LEFT JOIN "UserAnswers" ua ON q."QuestionID" = ua."QuestionID" AND ua."UserID" = $2 AND ua."QuizID" = $1
+                WHERE q."QuizID" = $1
+                ORDER BY q."QuestionID" ASC;
+            `;
+            const questionsResult = await db.query(questionsQuery, [quizIdNum, userId]);
+            questions = questionsResult.rows;
+            console.log(`[getQuizResultForUser] Questions query completed. Row count: ${questions.length}`);
+        } else {
+             // when result found, just fetch the questions for review
+             console.log(`[getQuizResultForUser] No result found for User ${userId}, Quiz ${quizIdNum}. Fetching questions for review.`);
+             const questionsQuery = `
+                 SELECT "QuestionID", "Text", "Options", "CorrectAnswerIndex"
+                 FROM "Question"
+                 WHERE "QuizID" = $1
+                 ORDER BY "QuestionID" ASC;
+             `;
+             const questionsResult = await db.query(questionsQuery, [quizIdNum]);
+             questions = questionsResult.rows;
+             console.log(`[getQuizResultForUser] Questions for review query completed. Row count: ${questions.length}`);
         }
 
-        console.log(`[getQuizResult] Result found. Sending success response.`);
+
+        console.log(`[getQuizResultForUser] Sending success response. Result found: ${resultFound}`);
         res.status(200).json({
             status: 'success',
             data: {
-                quizTitle: quizRes.rows[0].Title,
-                score: takesRes.rows[0].MarksObtained,
-                totalQuestions: quizRes.rows[0].totalQuestions, 
-                submissionTime: takesRes.rows[0].SubmissionTime
+                quizTitle: quizData.Title,
+                totalQuestions: quizData.totalQuestions,
+                resultFound: resultFound,
+                score: resultFound ? quizData.MarksObtained : null,
+                submissionTime: resultFound ? quizData.SubmissionTime : null,
+                questions: questions
             }
         });
+
     } catch (err) {
          console.error(`--- ERROR in getQuizResultForUser for User ${userId}, Quiz ${quizIdNum} ---`);
+         console.error("Error Message:", err.message);
+         console.error("Error Stack:", err.stack || 'No stack available');
          console.error(`-------------------------------------------------------------------`);
          next(err);
      }
