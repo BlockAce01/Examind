@@ -1,9 +1,8 @@
-// src/components/admin/AdminSidebar.tsx
-'use client'; // Needed for hooks like usePathname
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation'; // Hook to get current path
+import { usePathname } from 'next/navigation';
 import {
   ChartBarIcon,
   QuestionMarkCircleIcon,
@@ -19,7 +18,7 @@ const adminNavLinks = [
   { name: 'Manage Quizzes', href: '/admin/quizzes', icon: QuestionMarkCircleIcon },
   { name: 'Manage Resources', href: '/admin/resources', icon: BookOpenIcon },
   { name: 'Manage Discussions', href: '/admin/discussions', icon: ChatBubbleLeftRightIcon },
-  { name: 'Manage Users', href: '/admin/users', icon: UsersIcon }, // Added User management placeholder
+  { name: 'Manage Users', href: '/admin/users', icon: UsersIcon },
 ];
 
 const AdminSidebar = () => {
