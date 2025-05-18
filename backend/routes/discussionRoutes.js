@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const discussionController = require('../controllers/discussionController.js');
-//const postController = require('../controllers/postController'); //for fetching posts
+const commentController = require('../controllers/commentController'); //for fetching comments
 const { protect, restrictTo } = require('../middleware/authMiddleware'); //import middleware
 
 //forum topic routes
@@ -21,16 +21,16 @@ router.put('/:forumId', protect, restrictTo('admin', 'teacher'), discussionContr
 //delete a forum topic 
 router.delete('/:forumId', protect, restrictTo('admin', 'teacher'), discussionController.deleteForum);
 
-//post routes 
+//comment routes 
 
-//get all posts 
-//router.get('/:forumId/posts', postController.getPostsByForumId);
+//get all comments 
+router.get('/:forumId/comments', commentController.getCommentsByForumId);
 
-//create a new post
-//router.post('/:forumId/posts', protect, postController.createPost);
+//create a new comment
+router.post('/:forumId/comments', protect, commentController.createComment);
 
-//upvote a post
-//router.post('/:postId/upvote', protect, postController.upvotePost);
+//upvote a comment
+router.post('/:commentId/upvote', protect, commentController.upvoteComment);
 
 
 module.exports = router;
