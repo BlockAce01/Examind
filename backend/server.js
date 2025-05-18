@@ -14,7 +14,7 @@ app.use(express.json());
 
 //basic request logger
 app.use((req, res, next) => {
-    console.log('${req.method} ${req.path}');
+    console.log(`${req.method} ${req.path}`);
     next();
 });
 
@@ -56,5 +56,5 @@ app.use((err, req, res, next) => {
 
 //   start server
 app.listen(PORT, () => {
-  console.log('Server listening on http://localhost:${PORT}');
+  console.log(`Server listening on http://localhost:${PORT}`);
 });
