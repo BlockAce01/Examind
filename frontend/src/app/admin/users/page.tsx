@@ -1,12 +1,12 @@
 'use client'; //to handle state
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { mockUsers as initialUsers, type User } from '@/data/mockUsers'; //import user data
+import { type User } from '@/types/user';
 import Button from '@/components/ui/Button';
 import { PencilSquareIcon, TrashIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 
 export default function AdminUsersPage() {
-    const [users, setUsers] = useState<User[]>(initialUsers);
+    const [users, setUsers] = useState<User[]>([]);
 
     const handleDelete = (userId: number, userName: string) => {
         if (window.confirm(`Are you sure you want to delete the user "${userName}"? This action cannot be undone.`)) {

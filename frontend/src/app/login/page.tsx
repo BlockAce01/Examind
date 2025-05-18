@@ -9,12 +9,12 @@ import Spinner from '@/components/ui/Spinner';
 
 export default function LoginPage() {
     const router = useRouter();
-    const { login } = useAuth(); // Get login function from context
+    const { login } = useAuth(); // get login function from context
 
-    // Form state
+    // form state
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState<string | null>(null); // To display API errors
+    const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -23,7 +23,7 @@ export default function LoginPage() {
         setError(null); 
 
         try {
-            // Get API URL from environment variable or use default
+            // get API URL from environment variable or use default
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
             const response = await fetch(`${apiUrl}/api/v1/auth/login`, {
@@ -37,15 +37,19 @@ export default function LoginPage() {
             const data = await response.json();
 
             if (!response.ok) {
-                // Handle API errors 
+                // handle API errors 
                 throw new Error(data.message || `HTTP error! status: ${response.status}`);
             }
 
-            // Call context login function on success
+            // call context login function on success
             login(data.user, data.token);
 
-            // Redirect to dashboard
-            router.push('/dashboard');
+            // redirect based on user role
+            if (data.user?.role === 'admin') {
+                router.push('/admin');
+            } else {
+                router.push('/dashboard');
+            }
 
         } catch (err: any) {
             console.error("Login failed:", err);
@@ -61,7 +65,7 @@ export default function LoginPage() {
                 <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">Login to Examind</h1>
 
                 <form onSubmit={handleSubmit}>
-                    {/* Display general form error */}
+                    {/* display general form error */}
                     {error && (
                         <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
                             {error}
@@ -90,8 +94,6 @@ export default function LoginPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         disabled={isLoading}
-
-                        // error={fieldErrors.password}
                     />
 
                     <div className="mt-6">
@@ -99,7 +101,7 @@ export default function LoginPage() {
                             type="submit"
                             variant="primary"
                             fullWidth
-                            disabled={isLoading} // Disable button while loading
+                            disabled={isLoading} // disable button while loading
                         >
                             {isLoading ? <Spinner size="sm" className="mx-auto" /> : 'Login'}
                         </Button>
