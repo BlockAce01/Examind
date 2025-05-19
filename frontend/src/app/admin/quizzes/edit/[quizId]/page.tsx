@@ -146,7 +146,7 @@ export default function EditQuizPage() {
         }
     };
 
-    // question action handlers 
+    // question action handlers
     const handleSaveQuestion = async (questionData: Partial<Question>) => {
         if (!token || !quizIdNum) return;
         setIsSavingQuestion(true);
@@ -162,7 +162,7 @@ export default function EditQuizPage() {
             const response = await fetch(url, {
                 method: method,
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     Options: questionData.Options,
                     CorrectAnswerIndex: questionData.CorrectAnswerIndex
                 }),
@@ -191,7 +191,7 @@ export default function EditQuizPage() {
         if (!token || !quizIdNum) return;
         if (window.confirm(`Delete question: "${questionText.substring(0, 50)}..."?`)) {
             setQuestionError(null);
-            
+
             try {
                 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
                 const response = await fetch(`${apiUrl}/api/v1/quizzes/${quizIdNum}/questions/${questionIdToDelete}`, {
@@ -199,7 +199,7 @@ export default function EditQuizPage() {
                     headers: { 'Authorization': `Bearer ${token}` },
                 });
                 if (response.status === 204) {
-                    
+
                     fetchQuizData();
                     alert('Question deleted successfully.');
                 } else {
@@ -305,7 +305,7 @@ export default function EditQuizPage() {
                     <QuestionForm
                         quizId={quizIdNum}
                         initialData={editingQuestion}
-                        onSave={handleSaveQuestion} 
+                        onSave={handleSaveQuestion}
                         onCancel={handleCancelQuestionForm}
                         isSaving={isSavingQuestion}
                     />

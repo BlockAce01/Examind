@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react'; 
 import Link from 'next/link';
 
-// import { mockForums as initialForums, type Forum }
+// import
 import { type QuizListItem } from '@/types/quiz'; 
 import Button from '@/components/ui/Button';
 import Spinner from '@/components/ui/Spinner'; 
