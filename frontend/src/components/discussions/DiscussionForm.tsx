@@ -1,72 +1,73 @@
 'use client';
 
-import React, { useState, FormEvent } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Spinner from '@/components/ui/Spinner';
 import { useAuth } from '@/context/AuthContext';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+
+const DiscussionSchema = Yup.object().shape({
+    topic: Yup.string()
+        .trim()
+        .required('Topic title is required.'),
+    description: Yup.string().optional(),
+});
 
 export default function DiscussionForm() {
     const router = useRouter();
     const { token } = useAuth();
 
-    // form state
-    const [topic, setTopic] = useState('');
-    const [description, setDescription] = useState('');
-
-    // loading and error state
+    // loading and error state for API call
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
 
-    // handle form submission
-    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        if (!token) {
-            setError("Authentication required.");
-            return;
-        }
-        setIsLoading(true);
-        setError(null);
-        setFieldErrors({});
-
-        // validation
-        if (!topic.trim()) {
-            setFieldErrors({ topic: 'Topic title is required.' });
-            setIsLoading(false);
-            return;
-        }
-
-        // prepare payload matching backend controller keys
-        const forumData = {
-            Topic: topic,
-            Description: description || null,
-        };
-
-        try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-            const response = await fetch(`${apiUrl}/api/v1/discussions`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: JSON.stringify(forumData),
-            });
-            const data = await response.json();
-            if (!response.ok) {
-                throw new Error(data.message || `HTTP error! status: ${response.status}`);
+    const formik = useFormik({
+        initialValues: {
+            topic: '',
+            description: '',
+        },
+        validationSchema: DiscussionSchema,
+        onSubmit: async (values) => {
+            if (!token) {
+                setError("Authentication required.");
+                return;
             }
-            alert('Forum topic created successfully!');
-            router.push('/discussions');
-        } catch (err: any) {
-            setError(err.message || 'Failed to create forum topic.');
-        } finally {
-            setIsLoading(false);
-        }
-    };
+            setIsLoading(true);
+            setError(null);
+
+            // prepare payload matching backend controller keys
+            const forumData = {
+                Topic: values.topic,
+                Description: values.description || null,
+            };
+
+            try {
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+                const response = await fetch(`${apiUrl}/api/v1/discussions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(forumData),
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || `HTTP error! status: ${response.status}`);
+                }
+                alert('Forum topic created successfully!');
+                router.push('/discussions');
+            } catch (err: any) {
+                setError(err.message || 'Failed to create forum topic.');
+            } finally {
+                setIsLoading(false);
+            }
+        },
+    });
 
     return (
         <div>
@@ -75,23 +76,40 @@ export default function DiscussionForm() {
             </Link>
             <h1 className="text-2xl font-bold mb-6 text-gray-800">Add New Forum Topic</h1>
 
-            <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md border border-gray-200 space-y-4">
+            <form onSubmit={formik.handleSubmit} className="bg-white p-6 rounded-lg shadow-md border border-gray-200 space-y-4">
                  {error && (
                     <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
                         {error}
                     </div>
                  )}
 
-                <Input label="Topic Title" id="topic" name="topic" required value={topic} onChange={(e) => setTopic(e.target.value)} disabled={isLoading} error={fieldErrors.topic} />
+                <Input
+                    label="Topic Title"
+                    id="topic"
+                    name="topic"
+                    required
+                    value={formik.values.topic}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    disabled={isLoading}
+                    error={formik.touched.topic && formik.errors.topic ? formik.errors.topic : undefined}
+                />
 
                  <div className="mb-3">
                      <label htmlFor="description" className="block text-gray-700 text-sm font-bold mb-2">Description (Optional)</label>
                      <textarea
-                         id="description" name="description" rows={4}
-                         value={description} onChange={(e) => setDescription(e.target.value)}
+                         id="description"
+                         name="description"
+                         rows={4}
+                         value={formik.values.description}
+                         onChange={formik.handleChange}
+                         onBlur={formik.handleBlur}
                          disabled={isLoading}
                          className="shadow appearance-none border border-gray-300 rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                      />
+                      {formik.touched.description && formik.errors.description ? (
+                        <p className="text-red-500 text-xs italic mt-1">{formik.errors.description}</p>
+                    ) : null}
                  </div>
 
                 <div className="flex justify-end gap-4 pt-4 border-t border-gray-200">
