@@ -1,82 +1,95 @@
 'use client';
 
-import React, { useState, FormEvent } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import Link from 'next/link';
 import Spinner from '@/components/ui/Spinner';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+
+const RegisterSchema = Yup.object().shape({
+    name: Yup.string()
+        .required('Full Name is required.'),
+    email: Yup.string()
+        .email('Invalid email address')
+        .required('Email address is required.'),
+    password: Yup.string()
+        .required('Password is required.')
+        .min(6, 'Password must be at least 6 characters.'), // Example minimum length
+    confirmPassword: Yup.string()
+        .required('Confirm Password is required.')
+        .oneOf([Yup.ref('password')], 'Passwords must match'),
+    role: Yup.string()
+        .oneOf(['student', 'teacher'], 'Please select a valid role.')
+        .required('Please select a role.'),
+});
 
 export default function RegisterPage() {
     const router = useRouter();
 
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [role, setRole] = useState<'student' | 'teacher' | ''>(''); // Initialize role state
     const [error, setError] = useState<string | null>(null);
-    const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({}); // For field-specific errors
     const [isLoading, setIsLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        setError(null);
-        setFieldErrors({});
-        setSuccessMessage(null);
+    const formik = useFormik({
+        initialValues: {
+            name: '',
+            email: '',
+            password: '',
+            confirmPassword: '',
+            role: '',
+        },
+        validationSchema: RegisterSchema,
+        onSubmit: async (values) => {
+            setIsLoading(true);
+            setError(null);
+            setSuccessMessage(null);
 
-        // Frontend Validation
-        if (password !== confirmPassword) {
-            setFieldErrors({ confirmPassword: 'Passwords do not match' });
-            return;
-        }
-         if (!role) {
-             setFieldErrors({ role: 'Please select a role' });
-             return;
-         }
+            try {
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+                const response = await fetch(`${apiUrl}/api/v1/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: values.name,
+                        email: values.email,
+                        password: values.password,
+                        role: values.role,
+                    }),
+                });
 
-        setIsLoading(true);
+                const data = await response.json();
 
-        try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-            const response = await fetch(`${apiUrl}/api/v1/auth/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, password, role }),
-            });
+                if (!response.ok) {
+                    throw new Error(data.message || `HTTP error! status: ${response.status}`);
+                }
 
-            const data = await response.json();
+                setSuccessMessage('Registration successful! You can now log in.');
 
-            if (!response.ok) {
-                 // Handle potential field-specific errors if API provides them
-                 // Or just use the general message
-                throw new Error(data.message || `HTTP error! status: ${response.status}`);
+                // Clear form after successful submission
+                formik.resetForm();
+
+                setTimeout(() => {
+                    router.push('/login');
+                }, 2000); // Redirect after 2 seconds
+
+            } catch (err: any) {
+                console.error("Registration failed:", err);
+                setError(err.message || 'An unexpected error occurred. Please try again.');
+            } finally {
+                setIsLoading(false);
             }
-
-            // Show success message and maybe redirect to login after a delay
-            setSuccessMessage('Registration successful! You can now log in.');
-            
-            setName(''); setEmail(''); setPassword(''); setConfirmPassword(''); setRole('');
-            
-            setTimeout(() => {
-                router.push('/login');
-            }, 2000); // Redirect after 2 seconds
-
-        } catch (err: any) {
-            console.error("Registration failed:", err);
-            setError(err.message || 'An unexpected error occurred. Please try again.');
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        },
+    });
 
     return (
         <div className="flex justify-center items-center min-h-[calc(100vh-200px)] py-8">
             <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-md">
                 <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">Create Your Account</h1>
 
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={formik.handleSubmit}>
                     {/* Display general form error */}
                     {error && (
                         <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
@@ -90,10 +103,58 @@ export default function RegisterPage() {
                         </div>
                     )}
 
-                    <Input label="Full Name" id="name" type="text" name="name" placeholder="Your Full Name" required value={name} onChange={(e) => setName(e.target.value)} disabled={isLoading} />
-                    <Input label="Email Address" id="email" type="email" name="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} />
-                    <Input label="Password" id="password" type="password" name="password" placeholder="Choose a strong password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} />
-                    <Input label="Confirm Password" id="confirmPassword" type="password" name="confirmPassword" placeholder="Re-enter your password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} disabled={isLoading} error={fieldErrors.confirmPassword} />
+                    <Input
+                        label="Full Name"
+                        id="name"
+                        type="text"
+                        name="name"
+                        placeholder="Your Full Name"
+                        required
+                        value={formik.values.name}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        disabled={isLoading}
+                        error={formik.touched.name && formik.errors.name ? formik.errors.name : undefined}
+                    />
+                    <Input
+                        label="Email Address"
+                        id="email"
+                        type="email"
+                        name="email"
+                        placeholder="you@example.com"
+                        required
+                        value={formik.values.email}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        disabled={isLoading}
+                        error={formik.touched.email && formik.errors.email ? formik.errors.email : undefined}
+                    />
+                    <Input
+                        label="Password"
+                        id="password"
+                        type="password"
+                        name="password"
+                        placeholder="Choose a strong password"
+                        required
+                        value={formik.values.password}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        disabled={isLoading}
+                        error={formik.touched.password && formik.errors.password ? formik.errors.password : undefined}
+                    />
+                    <Input
+                        label="Confirm Password"
+                        id="confirmPassword"
+                        type="password"
+                        name="confirmPassword"
+                        placeholder="Re-enter your password"
+                        required
+                        value={formik.values.confirmPassword}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        disabled={isLoading}
+                        error={formik.touched.confirmPassword && formik.errors.confirmPassword ? formik.errors.confirmPassword : undefined}
+                    />
 
                     {/* Role Selection */}
                      <div className="mb-3"> {/* Reduced margin like Input */}
@@ -102,11 +163,12 @@ export default function RegisterPage() {
                             id="role"
                             name="role"
                             required
-                            value={role}
-                            onChange={(e) => setRole(e.target.value as 'student' | 'teacher')}
+                            value={formik.values.role}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
                             disabled={isLoading}
-                            className={`shadow border ${fieldErrors.role ? 'border-red-500' : 'border-gray-300'} rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 ${fieldErrors.role ? 'focus:ring-red-300' : 'focus:ring-blue-500'} focus:border-transparent bg-white`}
-                            aria-describedby={fieldErrors.role ? `role-error` : undefined}
+                            className={`shadow border ${formik.touched.role && formik.errors.role ? 'border-red-500' : 'border-gray-300'} rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 ${formik.touched.role && formik.errors.role ? 'focus:ring-red-300' : 'focus:ring-blue-500'} focus:border-transparent bg-white`}
+                            aria-describedby={formik.touched.role && formik.errors.role ? `role-error` : undefined}
                         >
                             <option value="" disabled>Select your role</option>
                             <option value="student">Student</option>
@@ -114,9 +176,9 @@ export default function RegisterPage() {
                         </select>
                          {/* Placeholder for error message */}
                          <div className="h-4 mt-1">
-                            {fieldErrors.role && (
+                            {formik.touched.role && formik.errors.role && (
                                 <p id="role-error" className="text-xs text-red-600">
-                                    {fieldErrors.role}
+                                    {formik.errors.role}
                                 </p>
                             )}
                         </div>
