@@ -6,5 +6,5 @@ export interface Resource {
     Year?: number | null; 
     FileURL: string;
     Description?: string | null; 
-    UploadedDate?: string | null; }
-    
+    UploadedDate?: string | null; 
+}

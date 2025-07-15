@@ -29,6 +29,8 @@ app.use('/api/v1/resources', require('./routes/resourceRoutes'));
 app.use('/api/v1/discussions', require('./routes/discussionRoutes'));
 //user routes(admin)
 app.use('/api/v1/users', require('./routes/userRoutes'));
+//badge routes
+app.use('/api/v1/badges', require('./routes/badgeRoutes'));
 // AI Chat routes
 app.use('/api/ai-chat', require('./routes/aiChatRoutes'));
 
@@ -42,7 +44,7 @@ app.get('/', (req, res) => {
 //   error handling middleware
 //catch-all for 404 Not Found errors
 app.use((req, res, next) => {
-    res.status(404).json({ message: `Route not found: ${req.originalUrl}` });
+    res.status(404).json({ message: 'Route not found: ${req.originalUrl}' });
 });
 
 //general error handler

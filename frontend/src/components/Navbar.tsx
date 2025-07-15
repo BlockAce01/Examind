@@ -23,7 +23,7 @@ const Navbar = () => {
     <nav className="bg-blue-600 text-white p-4 shadow-md">
       <div className="container mx-auto flex justify-between items-center">
         {}
-        <Link href={isAuthenticated ? "/dashboard" : "/app"} className="text-2xl font-bold hover:text-blue-200 flex items-center">
+        <Link href={isAuthenticated ? (user?.role === 'admin' ? "/admin" : "/dashboard") : "/app"} className="text-2xl font-bold hover:text-blue-200 flex items-center">
           <Image src="/apple-icon.png" alt="Examind Logo" width={40} height={40} className="mr-2" />
           Examind
         </Link>
@@ -31,12 +31,15 @@ const Navbar = () => {
           {}
           {isAuthenticated && (
             <>
-              <Link href="/dashboard" className="hover:text-blue-200">Dashboard</Link>
+              {user?.role !== 'admin' && (
+                <Link href="/dashboard" className="hover:text-blue-200">Dashboard</Link>
+              )}
               <Link href="/quizzes" className="hover:text-blue-200 hidden sm:inline-block">Quizzes</Link> {/*hide on xs*/}              
               <Link href="/resources" className="hover:text-blue-200">Resources</Link>
               <Link href="/discussions" className="hover:text-blue-200 hidden md:inline-block">Discussions</Link> {/*hide on xs,sm*/} 
               <Link href="/challenges" className="hover:text-blue-200 hidden lg:inline-block">Challenges</Link> {/*hide on xs,sm,md*/}
-              <Link href="/leaderboard" className="hover:text-blue-200 hidden sm:inline-block">Leaderboard</Link> {/*hide on xs*/}            
+              <Link href="/leaderboard" className="hover:text-blue-200 hidden sm:inline-block">Leaderboard</Link> {/*hide on xs*/}
+              <Link href="/challenges" className="hover:text-blue-200">Challenges</Link>
             </>
           )}
 

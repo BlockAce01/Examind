@@ -3,7 +3,6 @@ const db = require('../config/db');
 //get all forum topics
 exports.getAllForums = async (req, res, next) => {
     try {
-        //join with user table
         const query = `
             SELECT 
                 "DiscussionForum".*,
@@ -31,7 +30,6 @@ exports.getAllForums = async (req, res, next) => {
 exports.getForumById = async (req, res, next) => {
     const { forumId } = req.params;
     try {
-        //join with user table 
         const query = `
             SELECT 
                 "DiscussionForum".*,
@@ -62,9 +60,8 @@ exports.getForumById = async (req, res, next) => {
 
 //create new forum topic
 exports.createForum = async (req, res, next) => {
-
     const { Topic, Description } = req.body;
-     //get user ID 
+    //get user ID 
 
     if (!Topic) {
         return res.status(400).json({ message: 'Missing required field: Topic' });
@@ -98,7 +95,7 @@ exports.updateForum = async (req, res, next) => {
     const { forumId } = req.params;
     const { Topic, Description } = req.body;
 
-    if (!Topic && !Description) { //must provide at least one field 
+    if (!Topic && !Description) { //must provide at least one field
         return res.status(400).json({ message: 'No update data provided (Topic or Description).' });
     }
 

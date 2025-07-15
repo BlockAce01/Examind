@@ -47,16 +47,16 @@ CREATE TABLE public."Participate"
     CONSTRAINT "Participate_pkey" PRIMARY KEY ("UserID", "ChallengeID")
 );
 
-CREATE TABLE public."Post"
+CREATE TABLE public."Comment"
 (
-    "PostID" serial NOT NULL,
+    "CommentID" serial NOT NULL,
     "ForumID" integer NOT NULL,
     "UserID" integer NOT NULL,
     "Content" text COLLATE pg_catalog."default" NOT NULL,
     "Upvotes" integer DEFAULT 0,
     "Date" timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
-    "ParentPostID" integer,
-    CONSTRAINT "Post_pkey" PRIMARY KEY ("PostID")
+    "ParentCommentID" integer,
+    CONSTRAINT "Comment_pkey" PRIMARY KEY ("CommentID")
 );
 
 CREATE TABLE public."Question"
@@ -100,7 +100,18 @@ CREATE TABLE public."Reward"
     "Description" text COLLATE pg_catalog."default",
     "PointsRequired" integer NOT NULL DEFAULT 0,
     "AvailabilityStatus" character varying(50) COLLATE pg_catalog."default" NOT NULL DEFAULT 'available'::character varying,
+    "Type" character varying(50) COLLATE pg_catalog."default" NOT NULL DEFAULT 'general'::character varying,
     CONSTRAINT "Reward_pkey" PRIMARY KEY ("RewardID")
+);
+
+CREATE TABLE public."Badge"
+(
+    "BadgeID" serial NOT NULL,
+    "Name" character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    "Description" text COLLATE pg_catalog."default",
+    "IconURL" character varying(2048) COLLATE pg_catalog."default",
+    "Tier" character varying(50) COLLATE pg_catalog."default",
+    CONSTRAINT "Badge_pkey" PRIMARY KEY ("BadgeID")
 );
 
 CREATE TABLE public."Takes"
@@ -175,29 +186,29 @@ ALTER TABLE public."Participate"
     ON DELETE CASCADE;
 
 
-ALTER TABLE public."Post"
-    ADD CONSTRAINT post_forumid_foreign FOREIGN KEY ("ForumID")
+ALTER TABLE public."Comment"
+    ADD CONSTRAINT comment_forumid_foreign FOREIGN KEY ("ForumID")
     REFERENCES public."DiscussionForum" ("ForumID") MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE CASCADE;
-CREATE INDEX IF NOT EXISTS idx_post_forumid
-    ON public."Post"("ForumID");
+CREATE INDEX IF NOT EXISTS idx_comment_forumid
+    ON public."Comment"("ForumID");
 
 
-ALTER TABLE public."Post"
-    ADD CONSTRAINT post_parent_postid_foreign FOREIGN KEY ("ParentPostID")
-    REFERENCES public."Post" ("PostID") MATCH SIMPLE
+ALTER TABLE public."Comment"
+    ADD CONSTRAINT comment_parent_commentid_foreign FOREIGN KEY ("ParentCommentID")
+    REFERENCES public."Comment" ("CommentID") MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE CASCADE;
 
 
-ALTER TABLE public."Post"
-    ADD CONSTRAINT post_userid_foreign FOREIGN KEY ("UserID")
+ALTER TABLE public."Comment"
+    ADD CONSTRAINT comment_userid_foreign FOREIGN KEY ("UserID")
     REFERENCES public."User" ("UserID") MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE CASCADE;
-CREATE INDEX IF NOT EXISTS idx_post_userid
-    ON public."Post"("UserID");
+CREATE INDEX IF NOT EXISTS idx_comment_userid
+    ON public."Comment"("UserID");
 
 
 ALTER TABLE public."Question"
@@ -247,3 +258,48 @@ CREATE TABLE "UserAnswers" (
 );
 CREATE INDEX "idx_useranswers_quiz_user" ON "UserAnswers" ("QuizID", "UserID");
 CREATE INDEX "idx_useranswers_question" ON "UserAnswers" ("QuestionID");
+
+-- new table for tracking comment upvotes
+CREATE TABLE public."CommentUpvotes" (
+    "CommentID" integer NOT NULL,
+    "UserID" integer NOT NULL,
+    "UpvoteDate" timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "CommentUpvotes_pkey" PRIMARY KEY ("CommentID", "UserID"),
+    CONSTRAINT "CommentUpvotes_CommentID_fkey" FOREIGN KEY ("CommentID")
+        REFERENCES public."Comment" ("CommentID") MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE,
+    CONSTRAINT "CommentUpvotes_UserID_fkey" FOREIGN KEY ("UserID")
+        REFERENCES public."User" ("UserID") MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_commentupvotes_commentid
+    ON public."CommentUpvotes"("CommentID");
+
+CREATE INDEX IF NOT EXISTS idx_commentupvotes_userid
+    ON public."CommentUpvotes"("UserID");
+
+CREATE TABLE public."UserBadge"
+(
+    "UserBadgeID" serial NOT NULL,
+    "UserID" integer NOT NULL,
+    "BadgeID" integer NOT NULL,
+    "EarnedDate" timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "UserBadge_pkey" PRIMARY KEY ("UserBadgeID"),
+    CONSTRAINT "UserBadge_UserID_fkey" FOREIGN KEY ("UserID")
+        REFERENCES public."User" ("UserID") MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE,
+    CONSTRAINT "UserBadge_BadgeID_fkey" FOREIGN KEY ("BadgeID")
+        REFERENCES public."Badge" ("BadgeID") MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_userbadge_userid
+    ON public."UserBadge"("UserID");
+
+CREATE INDEX IF NOT EXISTS idx_userbadge_badgeid
+    ON public."UserBadge"("BadgeID");
