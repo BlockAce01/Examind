@@ -100,7 +100,18 @@ CREATE TABLE public."Reward"
     "Description" text COLLATE pg_catalog."default",
     "PointsRequired" integer NOT NULL DEFAULT 0,
     "AvailabilityStatus" character varying(50) COLLATE pg_catalog."default" NOT NULL DEFAULT 'available'::character varying,
+    "Type" character varying(50) COLLATE pg_catalog."default" NOT NULL DEFAULT 'general'::character varying,
     CONSTRAINT "Reward_pkey" PRIMARY KEY ("RewardID")
+);
+
+CREATE TABLE public."Badge"
+(
+    "BadgeID" serial NOT NULL,
+    "Name" character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    "Description" text COLLATE pg_catalog."default",
+    "IconURL" character varying(2048) COLLATE pg_catalog."default",
+    "Tier" character varying(50) COLLATE pg_catalog."default",
+    CONSTRAINT "Badge_pkey" PRIMARY KEY ("BadgeID")
 );
 
 CREATE TABLE public."Takes"
@@ -269,3 +280,26 @@ CREATE INDEX IF NOT EXISTS idx_commentupvotes_commentid
 
 CREATE INDEX IF NOT EXISTS idx_commentupvotes_userid
     ON public."CommentUpvotes"("UserID");
+
+CREATE TABLE public."UserBadge"
+(
+    "UserBadgeID" serial NOT NULL,
+    "UserID" integer NOT NULL,
+    "BadgeID" integer NOT NULL,
+    "EarnedDate" timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "UserBadge_pkey" PRIMARY KEY ("UserBadgeID"),
+    CONSTRAINT "UserBadge_UserID_fkey" FOREIGN KEY ("UserID")
+        REFERENCES public."User" ("UserID") MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE,
+    CONSTRAINT "UserBadge_BadgeID_fkey" FOREIGN KEY ("BadgeID")
+        REFERENCES public."Badge" ("BadgeID") MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_userbadge_userid
+    ON public."UserBadge"("UserID");
+
+CREATE INDEX IF NOT EXISTS idx_userbadge_badgeid
+    ON public."UserBadge"("BadgeID");

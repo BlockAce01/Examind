@@ -1,9 +1,86 @@
 const db = require('../config/db');
 
-// Get All Users (admin)
+// Middleware to get current user's ID from the request object
+exports.getMe = (req, res, next) => {
+    req.params.id = req.user.id;
+    next();
+};
+
+// get the current user's profile
+exports.getUserProfile = async (req, res, next) => {
+    try {
+        const query = 'SELECT "UserID", "Name", "Email", "Role", "SubscriptionStatus", "Points" FROM "User" WHERE "UserID" = $1';
+        const { rows } = await db.query(query, [req.user.id]);
+
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json({
+            status: 'success',
+            data: { user: rows[0] },
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// get user stats (points, badges, quizzes completed)
+exports.getUserStats = async (req, res, next) => {
+    const { id } = req.params;
+    try {
+        // fetch points from the User table
+        const pointsQuery = 'SELECT "Points" FROM "User" WHERE "UserID" = $1';
+        const pointsResult = await db.query(pointsQuery, [id]);
+        const points = pointsResult.rows.length > 0 ? pointsResult.rows[0].Points : 0;
+
+        // fetch quizzes completed count from the "Takes" table
+        const quizzesQuery = 'SELECT COUNT(*) FROM "Takes" WHERE "UserID" = $1';
+        const quizzesResult = await db.query(quizzesQuery, [id]);
+        const quizzesCompleted = parseInt(quizzesResult.rows[0].count, 10);
+
+        // fetch badges count from the "UserBadge" table
+        const badgesQuery = 'SELECT COUNT(*) FROM "UserBadge" WHERE "UserID" = $1';
+        const badgesResult = await db.query(badgesQuery, [id]);
+        const badges = parseInt(badgesResult.rows[0].count, 10);
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                points,
+                badges,
+                quizzesCompleted,
+            },
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.getUserBadges = async (req, res, next) => {
+    const { id } = req.params;
+    try {
+        const query = `
+            SELECT b.*
+            FROM "Badge" b
+            JOIN "UserBadge" ub ON b."BadgeID" = ub."BadgeID"
+            WHERE ub."UserID" = $1;
+        `;
+        const { rows } = await db.query(query, [id]);
+        res.status(200).json({
+            status: 'success',
+            data: rows,
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+
+// get All Users (admin)
 exports.getAllUsers = async (req, res, next) => {
     try {
-        // Select relevant non-sensitive fields
+        // select relevant non-sensitive fields
         const query = 'SELECT "UserID", "Name", "Email", "Role", "SubscriptionStatus", "Points" FROM "User" ORDER BY "UserID" ASC';
         const { rows } = await db.query(query);
         res.status(200).json({
@@ -16,7 +93,7 @@ exports.getAllUsers = async (req, res, next) => {
     }
 };
 
-// Get Single User (admin)
+// get Single User (admin)
 exports.getUserById = async (req, res, next) => {
     const { id } = req.params;
     try {
@@ -34,7 +111,7 @@ exports.getUserById = async (req, res, next) => {
     }
 };
 
-// Update User (admin - e.g., role, status)
+// Update User
 exports.updateUser = async (req, res, next) => {
     const { id } = req.params;
     // Do NOT allow changing email/password directly here without extra security

@@ -1,38 +1,67 @@
 'use client';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import ProtectedRoute from '@/components/auth/ProtectedRoute'; // Import ProtectedRoute
-import { useAuth } from '@/context/AuthContext'; // Import useAuth
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { useAuth } from '@/context/AuthContext';
 import StatCard from '@/components/dashboard/StatCard';
 import Button from '@/components/ui/Button';
 import { UserCircleIcon, AcademicCapIcon, SparklesIcon, TrophyIcon, Cog6ToothIcon, LockClosedIcon } from '@heroicons/react/24/outline';
+import axios from 'axios';
+import Badge from '@/components/ui/Badge';
+import { Badge as BadgeType } from '@/types/user';
 
-
-export default function ProfilePageWrapper() { 
-  return (
-    <ProtectedRoute>
-      <ProfilePageContent />
-    </ProtectedRoute>
-  );
+export default function ProfilePageWrapper() {
+    return (
+        <ProtectedRoute>
+            <ProfilePageContent />
+        </ProtectedRoute>
+    );
 }
 
 function ProfilePageContent() {
-  const { user: currentUser } = useAuth(); // Get user from context
+    const { user: currentUser, token } = useAuth();
+    const [stats, setStats] = useState({
+        points: 0,
+        badges: 0,
+        quizzesCompleted: 0,
+    });
+    const [badges, setBadges] = useState<BadgeType[]>([]);
+    const [loading, setLoading] = useState(true);
 
-  //fetch these properly later or add to user context
-  const profileStats = {
-      points: currentUser?.role === 'teacher' ? 'N/A' : (currentUser?.points ?? 0), // Use points from context if available
-      badges: currentUser?.role === 'teacher' ? 0 : 0, 
-      quizzesCompleted: currentUser?.role === 'teacher' ? 'N/A' : 0, 
-  };
+    useEffect(() => {
+        if (currentUser && currentUser.userId && token) {
+            const fetchData = async () => {
+                try {
+                    //fetch stats
+                    const statsResponse = await axios.get(`http://localhost:3001/api/v1/users/${currentUser.userId}/stats`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                    setStats(statsResponse.data.data);
 
-  // undefined during loading or if not authenticated.
-  // We can assume currentUser is available here, if the component renders
-  if (!currentUser) {
-      // This case should ideally not be reached if ProtectedRoute works correctly,
-      // but adding a fallback just in case.
-      return <div className="text-center p-10 text-gray-500">Loading user data...</div>;
-  }
+                    //trigger badge check
+                    await axios.post(`http://localhost:3001/api/v1/badges/check/${currentUser.userId}`, {}, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+
+                    //fetch badges
+                    const badgesResponse = await axios.get(`http://localhost:3001/api/v1/users/${currentUser.userId}/badges`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                    setBadges(badgesResponse.data.data);
+
+                } catch (error) {
+                    console.error('Failed to fetch user data:', error);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchData();
+        }
+    }, [currentUser, token]);
+
+    if (!currentUser) {
+        return <div className="text-center p-10 text-gray-500">Loading user data...</div>;
+    }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -63,21 +92,41 @@ function ProfilePageContent() {
           }`}>
             {currentUser.role ?? 'N/A'}
           </span>
+          <br />
            <Button variant="secondary" className="mt-4 text-xs">Edit Profile</Button> 
         </div>
 
         {/* Right Column: Stats and Settings */}
         <div className="md:col-span-2 space-y-6">
           {/* Achievements */}
-          {currentUser.role === 'student' && ( // Only show stats for students
+          {currentUser.role === 'student' && (
               <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
                   <h3 className="text-lg font-semibold mb-4 text-gray-700">Achievements</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <StatCard title="Points" value={profileStats.points} icon={<TrophyIcon className="w-6 h-6 text-yellow-500"/>} />
-                      <StatCard title="Badges" value={profileStats.badges} icon={<SparklesIcon className="w-6 h-6 text-indigo-500"/>} />
-                      <StatCard title="Quizzes Done" value={profileStats.quizzesCompleted} icon={<AcademicCapIcon className="w-6 h-6 text-green-500"/>} />
-                  </div>
-                  {/* Add link to view all badges */}
+                  {loading ? (
+                      <div className="text-center text-gray-500">Loading stats...</div>
+                  ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                          <StatCard title="Points" value={stats.points} icon={<TrophyIcon className="w-6 h-6 text-yellow-500" />} />
+                          <StatCard title="Badges" value={stats.badges} icon={<SparklesIcon className="w-6 h-6 text-indigo-500" />} />
+                          <StatCard title="Quizzes Done" value={stats.quizzesCompleted} icon={<AcademicCapIcon className="w-6 h-6 text-green-500" />} />
+                      </div>
+                  )}
+              </div>
+          )}
+
+          {/* Badges */}
+          {currentUser.role === 'student' && (
+              <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                  <h3 className="text-lg font-semibold mb-4 text-gray-700">My Badges</h3>
+                  {loading ? (
+                      <div className="text-center text-gray-500">Loading badges...</div>
+                  ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {badges.map((badge) => (
+                              <Badge key={badge.BadgeID} {...badge} />
+                          ))}
+                      </div>
+                  )}
               </div>
           )}
 
@@ -94,13 +143,6 @@ function ProfilePageContent() {
                     {/* Add more settings */}
                 </div>
            </div>
-
-            {/* Placeholder for Activity Feed/Links */}
-            {/* <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-               <h3 className="text-lg font-semibold mb-4 text-gray-700">My Activity</h3>
-               <p className="text-sm text-gray-500">Links to recent quizzes or posts...</p>
-            </div> */}
-
         </div>
       </div>
     </div>
