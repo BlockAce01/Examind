@@ -38,7 +38,8 @@ const Navbar = () => {
               <Link href="/resources" className="hover:text-blue-200">Resources</Link>
               <Link href="/discussions" className="hover:text-blue-200 hidden md:inline-block">Discussions</Link> {/*hide on xs,sm*/} 
               <Link href="/challenges" className="hover:text-blue-200 hidden lg:inline-block">Challenges</Link> {/*hide on xs,sm,md*/}
-              <Link href="/leaderboard" className="hover:text-blue-200 hidden sm:inline-block">Leaderboard</Link> {/*hide on xs*/}            
+              <Link href="/leaderboard" className="hover:text-blue-200 hidden sm:inline-block">Leaderboard</Link> {/*hide on xs*/}
+              <Link href="/challenges" className="hover:text-blue-200">Challenges</Link>
             </>
           )}
 
