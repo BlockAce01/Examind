@@ -60,6 +60,8 @@ export default function LoginPage() {
                 // redirect based on user role
                 if (data.user?.role === 'admin') {
                     router.push('/admin');
+                } else if (data.user?.role === 'teacher') {
+                    router.push('/teacher');
                 } else {
                     router.push('/dashboard');
                 }
