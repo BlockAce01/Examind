@@ -25,6 +25,42 @@ exports.getUserProfile = async (req, res, next) => {
     }
 };
 
+exports.getRecentActivity = async (req, res, next) => {
+    const { id } = req.params;
+    try {
+        const quizQuery = `
+            SELECT 'quiz' as type, q."Title" as title, t."SubmissionTime" as "timestamp"
+            FROM "Takes" t
+            JOIN "Quiz" q ON t."QuizID" = q."QuizID"
+            WHERE t."UserID" = $1
+            ORDER BY t."SubmissionTime" DESC
+            LIMIT 5;
+        `;
+        const quizResult = await db.query(quizQuery, [id]);
+
+        const discussionQuery = `
+            SELECT 'discussion' as type, d."Topic" as title, d."LastActivity" as "timestamp"
+            FROM "DiscussionForum" d
+            WHERE d."CreatorUserID" = $1
+            ORDER BY d."LastActivity" DESC
+            LIMIT 5;
+        `;
+        const discussionResult = await db.query(discussionQuery, [id]);
+
+        const activities = [...quizResult.rows, ...discussionResult.rows];
+        activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        
+        res.status(200).json({
+            status: 'success',
+            data: {
+                activities: activities.slice(0, 3),
+            },
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
 // get user stats (points, badges, quizzes completed)
 exports.getUserStats = async (req, res, next) => {
     const { id } = req.params;

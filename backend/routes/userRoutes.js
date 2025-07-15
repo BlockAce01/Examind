@@ -18,6 +18,9 @@ router.get('/:id/stats', userController.getUserStats);
 // get user badges
 router.get('/:id/badges', userController.getUserBadges);
 
+// get user's recent activity
+router.get('/:id/activity', userController.getRecentActivity);
+
 // apply restrictTo middleware to all routes below this point
 router.use(restrictTo('admin'));
 
