@@ -33,6 +33,8 @@ app.use('/api/v1/users', require('./routes/userRoutes'));
 app.use('/api/v1/badges', require('./routes/badgeRoutes'));
 // AI Chat routes
 app.use('/api/ai-chat', require('./routes/aiChatRoutes'));
+//stats routes
+app.use('/api/v1/stats', require('./routes/statsRoutes'));
 
 
 
