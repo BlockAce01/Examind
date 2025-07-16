@@ -24,6 +24,7 @@ export default function AdminDashboardPage() {
     const [quizStats, setQuizStats] = useState<{ subjectStats: StatData[], difficultyStats: StatData[] } | null>(null);
     const [resourceStats, setResourceStats] = useState<{ resourceTypeStats: StatData[] } | null>(null);
     const [discussionStats, setDiscussionStats] = useState<{ discussionStats: StatData[] } | null>(null);
+    const [userStats, setUserStats] = useState<{ userRoleStats: StatData[] } | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { token } = useAuth();
@@ -37,23 +38,26 @@ export default function AdminDashboardPage() {
                 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
                 const headers = { 'Authorization': `Bearer ${token}` };
 
-                const [quizRes, resourceRes, discussionRes] = await Promise.all([
+                const [quizRes, resourceRes, discussionRes, userRes] = await Promise.all([
                     fetch(`${apiUrl}/api/v1/stats/quizzes`, { headers }),
                     fetch(`${apiUrl}/api/v1/stats/resources`, { headers }),
                     fetch(`${apiUrl}/api/v1/stats/discussions`, { headers }),
+                    fetch(`${apiUrl}/api/v1/stats/users`, { headers }),
                 ]);
 
-                if (!quizRes.ok || !resourceRes.ok || !discussionRes.ok) {
+                if (!quizRes.ok || !resourceRes.ok || !discussionRes.ok || !userRes.ok) {
                     throw new Error('Failed to fetch all statistics');
                 }
 
                 const quizData = await quizRes.json();
                 const resourceData = await resourceRes.json();
                 const discussionData = await discussionRes.json();
+                const userData = await userRes.json();
 
                 setQuizStats(quizData.data);
                 setResourceStats(resourceData.data);
                 setDiscussionStats(discussionData.data);
+                setUserStats(userData.data);
             } catch (err: any) {
                 setError(err.message || 'An error occurred while fetching statistics.');
             } finally {
@@ -100,28 +104,51 @@ export default function AdminDashboardPage() {
                 </Link>
             </div>
 
+            {/* User Management Section */}
+            <div className="mt-8">
+                <h2 className="text-xl font-semibold mb-4 text-gray-700">User Management</h2>
+                {isLoading ? (
+                    <div className="flex justify-center p-10"><Spinner size="lg" /></div>
+                ) : error ? (
+                    <div className="text-center p-6 text-red-600 bg-red-50 border border-red-200 rounded-lg">Error: {error}</div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {userStats && userStats.userRoleStats && (
+                            <StatChart data={formatChartData(userStats.userRoleStats, 'Role', 'count')!} title="Users by Role" />
+                        )}
+                    </div>
+                )}
+                <Link href="/admin/users">
+                    <button className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        Manage Users
+                    </button>
+                </Link>
+            </div>
+
             {/* Content Overview Section */}
-            <h2 className="text-xl font-semibold mb-4 text-gray-700">Content Overview</h2>
-            {isLoading ? (
-                <div className="flex justify-center p-10"><Spinner size="lg" /></div>
-            ) : error ? (
-                <div className="text-center p-6 text-red-600 bg-red-50 border border-red-200 rounded-lg">Error: {error}</div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {quizStats && quizStats.subjectStats && (
-                        <StatChart data={formatChartData(quizStats.subjectStats, 'Subject', 'count')!} title="Quizzes by Subject" />
-                    )}
-                    {quizStats && quizStats.difficultyStats && (
-                        <StatChart data={formatChartData(quizStats.difficultyStats, 'DifficultyLevel', 'count')!} title="Quizzes by Difficulty" />
-                    )}
-                    {resourceStats && resourceStats.resourceTypeStats && (
-                        <StatChart data={formatChartData(resourceStats.resourceTypeStats, 'Type', 'count')!} title="Resources by Type" />
-                    )}
-                    {/* {discussionStats && discussionStats.discussionStats && (
-                        <StatChart data={formatChartData(discussionStats.discussionStats, 'Name', 'postCount')!} title="Discussion Contributions" />
-                    )} */}
-                </div>
-            )}
+            <div className="mt-8">
+                <h2 className="text-xl font-semibold mb-4 text-gray-700">Content Overview</h2>
+                {isLoading ? (
+                    <div className="flex justify-center p-10"><Spinner size="lg" /></div>
+                ) : error ? (
+                    <div className="text-center p-6 text-red-600 bg-red-50 border border-red-200 rounded-lg">Error: {error}</div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {quizStats && quizStats.subjectStats && (
+                            <StatChart data={formatChartData(quizStats.subjectStats, 'Subject', 'count')!} title="Quizzes by Subject" />
+                        )}
+                        {quizStats && quizStats.difficultyStats && (
+                            <StatChart data={formatChartData(quizStats.difficultyStats, 'DifficultyLevel', 'count')!} title="Quizzes by Difficulty" />
+                        )}
+                        {resourceStats && resourceStats.resourceTypeStats && (
+                            <StatChart data={formatChartData(resourceStats.resourceTypeStats, 'Type', 'count')!} title="Resources by Type" />
+                        )}
+                        {/* {discussionStats && discussionStats.discussionStats && (
+                            <StatChart data={formatChartData(discussionStats.discussionStats, 'Name', 'postCount')!} title="Discussion Contributions" />
+                        )} */}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
