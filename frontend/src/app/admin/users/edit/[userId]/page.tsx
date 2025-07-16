@@ -36,6 +36,7 @@ export default function EditUserPage() {
     const [userEmail, setUserEmail] = useState(''); //display only
     const [role, setRole] = useState<RoleType | ''>('');
     const [subscriptionStatus, setSubscriptionStatus] = useState<StatusType | ''>('');
+    const [adminPassword, setAdminPassword] = useState('');
 
     //loading & error state
     const [isLoadingData, setIsLoadingData] = useState(true);
@@ -103,10 +104,14 @@ export default function EditUserPage() {
          }
 
         //prepare payload 
-        const updatedUserData = {
+        const updatedUserData: any = {
             Role: role, //matches backend expected -Role
-            SubscriptionStatus: subscriptionStatus, //matches backend -SubscriptionStatus
+            adminPassword: adminPassword,
         };
+
+        if (role !== 'admin') {
+            updatedUserData.SubscriptionStatus = subscriptionStatus;
+        }
 
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -167,22 +172,35 @@ export default function EditUserPage() {
                 </div>
 
                  {/*select for subscription status*/}
-                <div className="mb-3">
-                    <label htmlFor="status" className="block text-gray-700 text-sm font-bold mb-2">Subscription Status</label>
-                    <select
-                        id="status" name="status" required
-                        value={subscriptionStatus} onChange={(e) => setSubscriptionStatus(e.target.value as StatusType)}
-                        disabled={isUpdating}
-                        className={`shadow border ${fieldErrors.status ? 'border-red-500' : 'border-gray-300'} rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 ${fieldErrors.status ? 'focus:ring-red-300' : 'focus:ring-blue-500'} focus:border-transparent bg-white`}
-                        aria-describedby={fieldErrors.status ? `status-error` : undefined}
-                    >
-                        <option value="" disabled>Select status...</option>
-                        {statuses.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
-                    </select>
-                    <div className="h-4 mt-1">
-                        {fieldErrors.status && <p id="status-error" className="text-xs text-red-600">{fieldErrors.status}</p>}
+                {role !== 'admin' && (
+                    <div className="mb-3">
+                        <label htmlFor="status" className="block text-gray-700 text-sm font-bold mb-2">Subscription Status</label>
+                        <select
+                            id="status" name="status" required
+                            value={subscriptionStatus} onChange={(e) => setSubscriptionStatus(e.target.value as StatusType)}
+                            disabled={isUpdating}
+                            className={`shadow border ${fieldErrors.status ? 'border-red-500' : 'border-gray-300'} rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 ${fieldErrors.status ? 'focus:ring-red-300' : 'focus:ring-blue-500'} focus:border-transparent bg-white`}
+                            aria-describedby={fieldErrors.status ? `status-error` : undefined}
+                        >
+                            <option value="" disabled>Select status...</option>
+                            {statuses.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+                        </select>
+                        <div className="h-4 mt-1">
+                            {fieldErrors.status && <p id="status-error" className="text-xs text-red-600">{fieldErrors.status}</p>}
+                        </div>
                     </div>
-                </div>
+                )}
+
+                {/* admin password */}
+                <Input
+                    label="Admin Password"
+                    id="adminPassword"
+                    name="adminPassword"
+                    type="password"
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    required
+                />
 
 
                 {/*buttons*/}

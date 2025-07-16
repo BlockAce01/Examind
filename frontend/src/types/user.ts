@@ -1,12 +1,12 @@
 export interface User {
-    userId: number; 
-    name: string;               
-    email: string;              
-    points?: number | null;  
-    badges?: string | null; 
-    subscriptionStatus?: 'Free' | 'Premium' | 'Pending' | 'Cancelled' | string;
-    role: 'teacher' | 'student' | 'admin'; 
-    avatarUrl?: string;
+    UserID: number; 
+    Name: string;               
+    Email: string;              
+    Points?: number | null;  
+    Badges?: string | null; 
+    SubscriptionStatus?: 'Free' | 'Premium' | 'Pending' | 'Cancelled' | string;
+    Role: 'teacher' | 'student' | 'admin'; 
+    AvatarURL?: string;
 }
 
 export interface Badge {

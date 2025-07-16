@@ -1,8 +1,9 @@
 const db = require('../config/db');
+const bcrypt = require('bcryptjs');
 
 // Middleware to get current user's ID from the request object
 exports.getMe = (req, res, next) => {
-    req.params.id = req.user.id;
+    req.params.id = req.user.UserID;
     next();
 };
 
@@ -150,32 +151,49 @@ exports.getUserById = async (req, res, next) => {
 // Update User
 exports.updateUser = async (req, res, next) => {
     const { id } = req.params;
-    // Do NOT allow changing email/password directly here without extra security
-    const { Role, SubscriptionStatus } = req.body; // Expect uppercase keys matching DB
+    const { Role, SubscriptionStatus, adminPassword } = req.body;
 
-    // Validate input (Role must be valid, etc.)
-    const validRoles = ['student', 'teacher', 'admin'];
-     const validStatuses = ['free', 'premium', 'pending', 'cancelled'];
-
-    if (Role && !validRoles.includes(Role)) {
-         return res.status(400).json({ message: 'Invalid Role specified.'});
-    }
-     if (SubscriptionStatus && !validStatuses.includes(SubscriptionStatus)) {
-         return res.status(400).json({ message: 'Invalid SubscriptionStatus specified.'});
-     }
-
-    if (!Role && !SubscriptionStatus) {
-        return res.status(400).json({ message: 'No update data provided (Role or SubscriptionStatus).' });
+    // 1. Verify admin password
+    if (!adminPassword) {
+        return res.status(400).json({ message: 'Admin password is required for this action.' });
     }
 
     try {
+        const adminUserQuery = 'SELECT * FROM "User" WHERE "UserID" = $1';
+        const { rows: adminRows } = await db.query(adminUserQuery, [req.user.UserID]);
+
+        if (adminRows.length === 0) {
+            return res.status(401).json({ message: 'Admin user not found.' });
+        }
+
+        const adminUser = adminRows[0];
+        const isMatch = await bcrypt.compare(adminPassword, adminUser.Password);
+
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Incorrect admin password.' });
+        }
+
+        // 2. Update target user
+        const validRoles = ['student', 'teacher', 'admin'];
+        const validStatuses = ['free', 'premium', 'pending', 'cancelled'];
+
+        if (Role && !validRoles.includes(Role)) {
+            return res.status(400).json({ message: 'Invalid Role specified.' });
+        }
+        if (SubscriptionStatus && !validStatuses.includes(SubscriptionStatus)) {
+            return res.status(400).json({ message: 'Invalid SubscriptionStatus specified.' });
+        }
+
+        if (!Role && !SubscriptionStatus) {
+            return res.status(400).json({ message: 'No update data provided (Role or SubscriptionStatus).' });
+        }
+
         const query = `
             UPDATE "User"
             SET "Role" = COALESCE($1, "Role"),
                 "SubscriptionStatus" = COALESCE($2, "SubscriptionStatus")
-                -- Add other updatable fields here if needed (e.g., "Name")
             WHERE "UserID" = $3
-            RETURNING "UserID", "Name", "Email", "Role", "SubscriptionStatus"; -- Return updated non-sensitive info
+            RETURNING "UserID", "Name", "Email", "Role", "SubscriptionStatus";
         `;
         const values = [Role, SubscriptionStatus, id];
 
