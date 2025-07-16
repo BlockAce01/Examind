@@ -303,3 +303,41 @@ CREATE INDEX IF NOT EXISTS idx_userbadge_userid
 
 CREATE INDEX IF NOT EXISTS idx_userbadge_badgeid
     ON public."UserBadge"("BadgeID");
+
+CREATE TABLE public."Subject"
+(
+    "SubjectID" serial NOT NULL,
+    "Name" character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    "Description" text COLLATE pg_catalog."default",
+    CONSTRAINT "Subject_pkey" PRIMARY KEY ("SubjectID")
+);
+
+CREATE TABLE public."StudentSubject"
+(
+    "UserID" integer NOT NULL,
+    "SubjectID" integer NOT NULL,
+    CONSTRAINT "StudentSubject_pkey" PRIMARY KEY ("UserID", "SubjectID"),
+    CONSTRAINT "StudentSubject_UserID_fkey" FOREIGN KEY ("UserID")
+        REFERENCES public."User" ("UserID") MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE,
+    CONSTRAINT "StudentSubject_SubjectID_fkey" FOREIGN KEY ("SubjectID")
+        REFERENCES public."Subject" ("SubjectID") MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
+);
+
+CREATE TABLE public."TeacherSubject"
+(
+    "UserID" integer NOT NULL,
+    "SubjectID" integer NOT NULL,
+    CONSTRAINT "TeacherSubject_pkey" PRIMARY KEY ("UserID", "SubjectID"),
+    CONSTRAINT "TeacherSubject_UserID_fkey" FOREIGN KEY ("UserID")
+        REFERENCES public."User" ("UserID") MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE,
+    CONSTRAINT "TeacherSubject_SubjectID_fkey" FOREIGN KEY ("SubjectID")
+        REFERENCES public."Subject" ("SubjectID") MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
+);
