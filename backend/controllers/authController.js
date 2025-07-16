@@ -18,6 +18,10 @@ exports.register = async (req, res, next) => {
         return res.status(400).json({ message: 'Students must select exactly 3 subjects' });
     }
 
+    if (role === 'teacher' && (!Array.isArray(subjects) || subjects.length !== 1)) {
+        return res.status(400).json({ message: 'Teachers must select exactly 1 subject' });
+    }
+
     //check the role validation
     if (role !== 'student' && role !== 'teacher') {
          return res.status(400).json({ message: 'Invalid role specified. Must be student or teacher.' });
@@ -51,6 +55,9 @@ exports.register = async (req, res, next) => {
             for (const subjectId of subjects) {
                 await db.query(studentSubjectQuery, [newUser.UserID, subjectId]);
             }
+        } else if (role === 'teacher') {
+            const teacherSubjectQuery = 'INSERT INTO "TeacherSubject" ("UserID", "SubjectID") VALUES ($1, $2)';
+            await db.query(teacherSubjectQuery, [newUser.UserID, subjects[0]]);
         }
 
         //send success message

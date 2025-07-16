@@ -33,6 +33,9 @@ const RegisterSchema = Yup.object().shape({
     subject3: Yup.string().when('role', (role: any, schema: any) => {
         return role[0] === 'student' ? schema.required('Please select your third subject.') : schema;
     }),
+    teacherSubject: Yup.string().when('role', (role: any, schema: any) => {
+        return role[0] === 'teacher' ? schema.required('Please select a subject.') : schema;
+    }),
 });
 
 export default function RegisterPage() {
@@ -69,6 +72,7 @@ export default function RegisterPage() {
             subject1: '',
             subject2: '',
             subject3: '',
+            teacherSubject: '',
         },
         validationSchema: RegisterSchema,
         onSubmit: async (values) => {
@@ -86,7 +90,7 @@ export default function RegisterPage() {
                         email: values.email,
                         password: values.password,
                         role: values.role,
-                        subjects: [values.subject1, values.subject2, values.subject3],
+                        subjects: values.role === 'student' ? [values.subject1, values.subject2, values.subject3] : [values.teacherSubject],
                     }),
                 });
 
@@ -298,6 +302,34 @@ export default function RegisterPage() {
                                 </div>
                             )}
                         </>
+                    )}
+
+                    {formik.values.role === 'teacher' && (
+                        <div className="mb-3">
+                            <label htmlFor="teacherSubject" className="block text-gray-700 text-sm font-bold mb-2">Subject</label>
+                            <select
+                                id="teacherSubject"
+                                name="teacherSubject"
+                                required
+                                value={formik.values.teacherSubject}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
+                                disabled={isLoading}
+                                className={`shadow border ${formik.touched.teacherSubject && formik.errors.teacherSubject ? 'border-red-500' : 'border-gray-300'} rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 ${formik.touched.teacherSubject && formik.errors.teacherSubject ? 'focus:ring-red-300' : 'focus:ring-blue-500'} focus:border-transparent bg-white`}
+                            >
+                                <option value="" disabled>Select a Subject</option>
+                                {subjects.map(subject => (
+                                    <option key={subject.SubjectID} value={subject.SubjectID}>{subject.Name}</option>
+                                ))}
+                            </select>
+                            <div className="h-4 mt-1">
+                                {formik.touched.teacherSubject && formik.errors.teacherSubject && (
+                                    <p className="text-xs text-red-600">
+                                        {formik.errors.teacherSubject}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
                     )}
 
 
