@@ -29,6 +29,30 @@ exports.getQuizStats = async (req, res) => {
     }
 };
 
+//get user statistics
+exports.getUserStats = async (req, res) => {
+    try {
+        const userRoleStats = await db.query(`
+            SELECT "Role", COUNT(*) as count FROM "User" GROUP BY "Role"
+        `);
+
+        console.log('User Stats:', JSON.stringify(userRoleStats, null, 2));
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                userRoleStats: userRoleStats.rows || [],
+            },
+        });
+    } catch (error) {
+        console.error('Error fetching user stats:', error);
+        res.status(500).json({
+            status: 'error',
+            message: error.message,
+        });
+    }
+};
+
 //get resource statistics
 exports.getResourceStats = async (req, res) => {
     try {
