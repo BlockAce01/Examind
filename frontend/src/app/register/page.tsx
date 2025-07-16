@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
@@ -24,6 +24,15 @@ const RegisterSchema = Yup.object().shape({
     role: Yup.string()
         .oneOf(['student', 'teacher'], 'Please select a valid role.')
         .required('Please select a role.'),
+    subject1: Yup.string().when('role', (role: any, schema: any) => {
+        return role[0] === 'student' ? schema.required('Please select your first subject.') : schema;
+    }),
+    subject2: Yup.string().when('role', (role: any, schema: any) => {
+        return role[0] === 'student' ? schema.required('Please select your second subject.') : schema;
+    }),
+    subject3: Yup.string().when('role', (role: any, schema: any) => {
+        return role[0] === 'student' ? schema.required('Please select your third subject.') : schema;
+    }),
 });
 
 export default function RegisterPage() {
@@ -32,6 +41,23 @@ export default function RegisterPage() {
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [subjects, setSubjects] = useState<{ SubjectID: number; Name: string }[]>([]);
+
+    useEffect(() => {
+        const fetchSubjects = async () => {
+            try {
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+                const response = await fetch(`${apiUrl}/api/v1/subjects`);
+                const data = await response.json();
+                if (response.ok) {
+                    setSubjects(data);
+                }
+            } catch (error) {
+                console.error('Failed to fetch subjects:', error);
+            }
+        };
+        fetchSubjects();
+    }, []);
 
     const formik = useFormik({
         initialValues: {
@@ -40,6 +66,9 @@ export default function RegisterPage() {
             password: '',
             confirmPassword: '',
             role: '',
+            subject1: '',
+            subject2: '',
+            subject3: '',
         },
         validationSchema: RegisterSchema,
         onSubmit: async (values) => {
@@ -57,6 +86,7 @@ export default function RegisterPage() {
                         email: values.email,
                         password: values.password,
                         role: values.role,
+                        subjects: [values.subject1, values.subject2, values.subject3],
                     }),
                 });
 
@@ -183,6 +213,92 @@ export default function RegisterPage() {
                             )}
                         </div>
                     </div>
+
+                    {formik.values.role === 'student' && (
+                        <>
+                            <div className="mb-3">
+                                <label htmlFor="subject1" className="block text-gray-700 text-sm font-bold mb-2">Subject 1</label>
+                                <select
+                                    id="subject1"
+                                    name="subject1"
+                                    required
+                                    value={formik.values.subject1}
+                                    onChange={formik.handleChange}
+                                    onBlur={formik.handleBlur}
+                                    disabled={isLoading}
+                                    className={`shadow border ${formik.touched.subject1 && formik.errors.subject1 ? 'border-red-500' : 'border-gray-300'} rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 ${formik.touched.subject1 && formik.errors.subject1 ? 'focus:ring-red-300' : 'focus:ring-blue-500'} focus:border-transparent bg-white`}
+                                >
+                                    <option value="" disabled>Select Subject 1</option>
+                                    {subjects.map(subject => (
+                                        <option key={subject.SubjectID} value={subject.SubjectID}>{subject.Name}</option>
+                                    ))}
+                                </select>
+                                <div className="h-4 mt-1">
+                                    {formik.touched.subject1 && formik.errors.subject1 && (
+                                        <p className="text-xs text-red-600">
+                                            {formik.errors.subject1}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {formik.values.subject1 && (
+                                <div className="mb-3">
+                                    <label htmlFor="subject2" className="block text-gray-700 text-sm font-bold mb-2">Subject 2</label>
+                                    <select
+                                        id="subject2"
+                                        name="subject2"
+                                        required
+                                        value={formik.values.subject2}
+                                        onChange={formik.handleChange}
+                                        onBlur={formik.handleBlur}
+                                        disabled={isLoading}
+                                        className={`shadow border ${formik.touched.subject2 && formik.errors.subject2 ? 'border-red-500' : 'border-gray-300'} rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 ${formik.touched.subject2 && formik.errors.subject2 ? 'focus:ring-red-300' : 'focus:ring-blue-500'} focus:border-transparent bg-white`}
+                                    >
+                                        <option value="" disabled>Select Subject 2</option>
+                                        {subjects.filter(subject => subject.SubjectID.toString() !== formik.values.subject1).map(subject => (
+                                            <option key={subject.SubjectID} value={subject.SubjectID}>{subject.Name}</option>
+                                        ))}
+                                    </select>
+                                    <div className="h-4 mt-1">
+                                        {formik.touched.subject2 && formik.errors.subject2 && (
+                                            <p className="text-xs text-red-600">
+                                                {formik.errors.subject2}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {formik.values.subject2 && (
+                                <div className="mb-3">
+                                    <label htmlFor="subject3" className="block text-gray-700 text-sm font-bold mb-2">Subject 3</label>
+                                    <select
+                                        id="subject3"
+                                        name="subject3"
+                                        required
+                                        value={formik.values.subject3}
+                                        onChange={formik.handleChange}
+                                        onBlur={formik.handleBlur}
+                                        disabled={isLoading}
+                                        className={`shadow border ${formik.touched.subject3 && formik.errors.subject3 ? 'border-red-500' : 'border-gray-300'} rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 ${formik.touched.subject3 && formik.errors.subject3 ? 'focus:ring-red-300' : 'focus:ring-blue-500'} focus:border-transparent bg-white`}
+                                    >
+                                        <option value="" disabled>Select Subject 3</option>
+                                        {subjects.filter(subject => subject.SubjectID.toString() !== formik.values.subject1 && subject.SubjectID.toString() !== formik.values.subject2).map(subject => (
+                                            <option key={subject.SubjectID} value={subject.SubjectID}>{subject.Name}</option>
+                                        ))}
+                                    </select>
+                                    <div className="h-4 mt-1">
+                                        {formik.touched.subject3 && formik.errors.subject3 && (
+                                            <p className="text-xs text-red-600">
+                                                {formik.errors.subject3}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    )}
 
 
                     <div className="mt-6">

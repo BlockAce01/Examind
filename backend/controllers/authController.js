@@ -7,11 +7,15 @@ const SALT_ROUNDS = 10; //sets the level of security
 
 //register a new user
 exports.register = async (req, res, next) => {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, subjects } = req.body;
 
     //input validation
-    if (!name || !email || !password || !role) {
-        return res.status(400).json({ message: 'Please provide name, email, password, and role' });
+    if (!name || !email || !password || !role || !subjects) {
+        return res.status(400).json({ message: 'Please provide name, email, password, role and subjects' });
+    }
+
+    if (role === 'student' && (!Array.isArray(subjects) || subjects.length !== 3)) {
+        return res.status(400).json({ message: 'Students must select exactly 3 subjects' });
     }
 
     //check the role validation
@@ -41,6 +45,13 @@ exports.register = async (req, res, next) => {
 
         const result = await db.query(newUserQuery, values);
         const newUser = result.rows[0];
+
+        if (role === 'student') {
+            const studentSubjectQuery = 'INSERT INTO "StudentSubject" ("UserID", "SubjectID") VALUES ($1, $2)';
+            for (const subjectId of subjects) {
+                await db.query(studentSubjectQuery, [newUser.UserID, subjectId]);
+            }
+        }
 
         //send success message
         res.status(201).json({
