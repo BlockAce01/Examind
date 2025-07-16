@@ -71,15 +71,40 @@ export default function QuizzesPage() {
         fetchQuizzes();
     }, [token]); //add token to dependency array
 
+    const [studentSubjects, setStudentSubjects] = useState<{ SubjectID: number; Name: string }[]>([]);
+
+    useEffect(() => {
+        const fetchStudentSubjects = async () => {
+            if (user?.role === 'student' && token) {
+                try {
+                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+                    const response = await fetch(`${apiUrl}/api/v1/subjects/student`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                        },
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        setStudentSubjects(data);
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch student subjects:', error);
+                }
+            }
+        };
+        fetchStudentSubjects();
+    }, [user, token]);
+
     //ensure keys match the QuizListItem type casing
-    const uniqueSubjects = getUniqueValues(quizzes, 'Subject');
+    const uniqueSubjects = user?.role === 'student' ? studentSubjects.map(s => s.Name) : getUniqueValues(quizzes, 'Subject');
     const difficulties = ['Easy', 'Medium', 'Hard'];
 
     //client-side filter logic
     const filteredQuizzes = quizzes.filter(quiz => {
         const matchesSubject = selectedSubject === '' || quiz.Subject === selectedSubject;
         const matchesDifficulty = selectedDifficulty === '' || quiz.DifficultyLevel === selectedDifficulty;
-        return matchesSubject && matchesDifficulty;
+        const studentHasSubject = user?.role !== 'student' || uniqueSubjects.includes(quiz.Subject);
+        return matchesSubject && matchesDifficulty && studentHasSubject;
     });
 
     return (
@@ -101,6 +126,7 @@ export default function QuizzesPage() {
                     value={selectedSubject}
                     onChange={(e) => setSelectedSubject(e.target.value)}
                     className="p-2 border rounded bg-white focus:ring-2 focus:ring-blue-300 focus:outline-none flex-grow sm:flex-grow-0"
+                    aria-label="Filter by subject"
                 >
                     <option value="">All Subjects</option>
                     {uniqueSubjects.map((subject, index) => (
@@ -111,6 +137,7 @@ export default function QuizzesPage() {
                     value={selectedDifficulty}
                     onChange={(e) => setSelectedDifficulty(e.target.value)}
                     className="p-2 border rounded bg-white focus:ring-2 focus:ring-blue-300 focus:outline-none flex-grow sm:flex-grow-0"
+                    aria-label="Filter by difficulty"
                 >
                     <option value="">All Difficulties</option>
                     {difficulties.map((level) => (

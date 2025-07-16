@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, FormEvent } from 'react'; 
+import React, { useState, FormEvent, useEffect } from 'react'; 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation'; 
 import Button from '@/components/ui/Button';
@@ -14,11 +14,12 @@ type DifficultyLevelType = typeof difficultyLevels[number];
 
 export default function AddQuizPage() {
     const router = useRouter();
-    const { token } = useAuth();
+    const { token, user } = useAuth();
 
     // Form State
     const [title, setTitle] = useState('');
     const [subject, setSubject] = useState('');
+    const [teacherSubjects, setTeacherSubjects] = useState<{ SubjectID: number; Name: string }[]>([]);
     const [difficultyLevel, setDifficultyLevel] = useState<DifficultyLevelType | ''>('');
     const [timeLimit, setTimeLimit] = useState<number | ''>('');
 
@@ -26,6 +27,32 @@ export default function AddQuizPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
+
+    useEffect(() => {
+        const fetchSubjects = async () => {
+            if (token) {
+                try {
+                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+                    let url = `${apiUrl}/api/v1/subjects`;
+                    if (user?.role === 'teacher') {
+                        url = `${apiUrl}/api/v1/subjects/teacher`;
+                    }
+                    const response = await fetch(url, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                        },
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        setTeacherSubjects(data);
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch subjects:', error);
+                }
+            }
+        };
+        fetchSubjects();
+    }, [user, token]);
 
     // Handle Form Submission
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -101,7 +128,22 @@ export default function AddQuizPage() {
                 )}
 
                 <Input label="Title" id="title" name="title" required value={title} onChange={(e) => setTitle(e.target.value)} disabled={isLoading} error={fieldErrors.title} />
-                <Input label="Subject" id="subject" name="subject" required value={subject} onChange={(e) => setSubject(e.target.value)} disabled={isLoading} error={fieldErrors.subject} />
+                
+                <div className="mb-3">
+                    <label htmlFor="subject" className="block text-gray-700 text-sm font-bold mb-2">Subject</label>
+                    <select
+                        id="subject" name="subject" required
+                        value={subject} onChange={(e) => setSubject(e.target.value)}
+                        disabled={isLoading}
+                        className={`shadow border ${fieldErrors.subject ? 'border-red-500' : 'border-gray-300'} rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 ${fieldErrors.subject ? 'focus:ring-red-300' : 'focus:ring-blue-500'} focus:border-transparent bg-white`}
+                    >
+                        <option value="" disabled>Select a subject</option>
+                        {teacherSubjects.map(subject => <option key={subject.SubjectID} value={subject.Name}>{subject.Name}</option>)}
+                    </select>
+                    <div className="h-4 mt-1">
+                        {fieldErrors.subject && <p className="text-xs text-red-600">{fieldErrors.subject}</p>}
+                    </div>
+                </div>
 
                 {/* Select for Difficulty Level */}
                 <div className="mb-3">
