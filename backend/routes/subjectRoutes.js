@@ -5,11 +5,13 @@ const {
   createSubject,
   assignStudentToSubject,
   assignTeacherToSubject,
+  getStudentSubjects,
+  getTeacherSubjects,
 } = require('../controllers/subjectController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 router.route('/').get(getSubjects).post(protect, admin, createSubject);
-router.route('/student').post(protect, admin, assignStudentToSubject);
-router.route('/teacher').post(protect, admin, assignTeacherToSubject);
+router.route('/student').get(protect, getStudentSubjects).post(protect, admin, assignStudentToSubject);
+router.route('/teacher').get(protect, getTeacherSubjects).post(protect, admin, assignTeacherToSubject);
 
 module.exports = router;
