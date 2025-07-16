@@ -3,16 +3,41 @@ const db = require('../config/db');
 //get all forum topics
 exports.getAllForums = async (req, res, next) => {
     try {
-        const query = `
-            SELECT 
-                "DiscussionForum".*,
-                "User"."Name" AS "CreatorName",
-                "User"."Role" AS "CreatorRole"
-            FROM "DiscussionForum"
-            INNER JOIN "User" ON "DiscussionForum"."CreatorUserID" = "User"."UserID"
-            ORDER BY "LastActivity" DESC NULLS LAST
-        `;
-        const { rows } = await db.query(query);
+        const user = req.user;
+        let query;
+        let values = [];
+
+        if (user && user.Role === 'student') {
+            query = `
+                SELECT 
+                    df.*,
+                    u."Name" AS "CreatorName",
+                    u."Role" AS "CreatorRole",
+                    s."Name" AS "SubjectName"
+                FROM "DiscussionForum" df
+                INNER JOIN "User" u ON df."CreatorUserID" = u."UserID"
+                LEFT JOIN "Subject" s ON df."SubjectID" = s."SubjectID"
+                WHERE df."SubjectID" IN (
+                    SELECT "SubjectID" FROM "StudentSubject" WHERE "UserID" = $1
+                )
+                ORDER BY df."LastActivity" DESC NULLS LAST
+            `;
+            values.push(user.UserID);
+        } else {
+            query = `
+                SELECT 
+                    df.*,
+                    u."Name" AS "CreatorName",
+                    u."Role" AS "CreatorRole",
+                    s."Name" AS "SubjectName"
+                FROM "DiscussionForum" df
+                INNER JOIN "User" u ON df."CreatorUserID" = u."UserID"
+                LEFT JOIN "Subject" s ON df."SubjectID" = s."SubjectID"
+                ORDER BY df."LastActivity" DESC NULLS LAST
+            `;
+        }
+
+        const { rows } = await db.query(query, values);
         res.status(200).json({
             status: 'success',
             results: rows.length,
@@ -60,22 +85,22 @@ exports.getForumById = async (req, res, next) => {
 
 //create new forum topic
 exports.createForum = async (req, res, next) => {
-    const { Topic, Description } = req.body;
+    const { Topic, Description, SubjectID } = req.body;
     //get user ID 
 
-    if (!Topic) {
-        return res.status(400).json({ message: 'Missing required field: Topic' });
+    if (!Topic || !SubjectID) {
+        return res.status(400).json({ message: 'Missing required fields: Topic and SubjectID' });
     }
 
     try {
         const creatorUserId = req.user?.UserID; //get user ID from auth middleware
 
         const query = `
-            INSERT INTO "DiscussionForum" ("Topic", "Description", "LastActivity", "CreatorUserID")
-            VALUES ($1, $2, NOW(), $3)
+            INSERT INTO "DiscussionForum" ("Topic", "Description", "LastActivity", "CreatorUserID", "SubjectID")
+            VALUES ($1, $2, NOW(), $3, $4)
             RETURNING *;
         `;
-        const values = [Topic, Description || null, creatorUserId];
+        const values = [Topic, Description || null, creatorUserId, SubjectID];
         const { rows } = await db.query(query, values);
 
         res.status(201).json({

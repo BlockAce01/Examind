@@ -26,6 +26,7 @@ CREATE TABLE public."DiscussionForum"
     "PostCount" integer DEFAULT 0,
     "LastActivity" timestamp with time zone,
     "CreatorUserID" integer,
+    "SubjectID" integer,
     CONSTRAINT "DiscussionForum_pkey" PRIMARY KEY ("ForumID")
 );
 
@@ -154,6 +155,13 @@ ALTER TABLE public."Access"
 ALTER TABLE public."DiscussionForum"
     ADD CONSTRAINT forum_creator_userid_foreign FOREIGN KEY ("CreatorUserID")
     REFERENCES public."User" ("UserID") MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE SET NULL;
+
+
+ALTER TABLE public."DiscussionForum"
+    ADD CONSTRAINT "DiscussionForum_SubjectID_fkey" FOREIGN KEY ("SubjectID")
+    REFERENCES public."Subject" ("SubjectID") MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE SET NULL;
 

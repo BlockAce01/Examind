@@ -7,7 +7,7 @@ const { protect, restrictTo } = require('../middleware/authMiddleware'); //impor
 //forum topic routes
 
 //get all forum topics 
-router.get('/', discussionController.getAllForums);
+router.get('/', protect, discussionController.getAllForums);
 
 //get single forum topic
 router.get('/:forumId', discussionController.getForumById);

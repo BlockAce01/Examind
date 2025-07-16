@@ -7,6 +7,8 @@ export interface DiscussionForum {
   CreatorUserID?: number;
   CreatorName: string;
   CreatorRole: string;
+  SubjectID?: number;
+  SubjectName?: string;
 }
 
 export interface Comment { 
