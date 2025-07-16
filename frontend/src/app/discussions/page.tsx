@@ -13,7 +13,7 @@ export default function DiscussionsPage() {
     const [forums, setForums] = useState<DiscussionForum[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const { user } = useAuth();
+    const { user, token } = useAuth();
 
     useEffect(() => {
         const fetchForums = async () => {
@@ -21,7 +21,11 @@ export default function DiscussionsPage() {
             setError(null);
             try {
                 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-                const response = await fetch(`${apiUrl}/api/v1/discussions`);
+                const response = await fetch(`${apiUrl}/api/v1/discussions`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -37,8 +41,10 @@ export default function DiscussionsPage() {
                 setIsLoading(false);
             }
         };
-        fetchForums();
-    }, []);
+        if (token) {
+            fetchForums();
+        }
+    }, [token]);
 
     return (
         <div>

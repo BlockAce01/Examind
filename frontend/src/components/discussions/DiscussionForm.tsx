@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
@@ -15,20 +15,46 @@ const DiscussionSchema = Yup.object().shape({
         .trim()
         .required('Topic title is required.'),
     description: Yup.string().optional(),
+    subjectId: Yup.number().required('Subject is required.'),
 });
+
+interface Subject {
+    SubjectID: number;
+    Name: string;
+}
 
 export default function DiscussionForm() {
     const router = useRouter();
     const { token } = useAuth();
+    const [subjects, setSubjects] = useState<Subject[]>([]);
 
     // loading and error state for API call
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    useEffect(() => {
+        const fetchSubjects = async () => {
+            try {
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+                const response = await fetch(`${apiUrl}/api/v1/subjects`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch subjects');
+                }
+                const data = await response.json();
+                setSubjects(data);
+            } catch (error: any) {
+                setError(error.message);
+            }
+        };
+
+        fetchSubjects();
+    }, []);
+
     const formik = useFormik({
         initialValues: {
             topic: '',
             description: '',
+            subjectId: '',
         },
         validationSchema: DiscussionSchema,
         onSubmit: async (values) => {
@@ -43,6 +69,7 @@ export default function DiscussionForm() {
             const forumData = {
                 Topic: values.topic,
                 Description: values.description || null,
+                SubjectID: values.subjectId,
             };
 
             try {
@@ -94,6 +121,29 @@ export default function DiscussionForm() {
                     disabled={isLoading}
                     error={formik.touched.topic && formik.errors.topic ? formik.errors.topic : undefined}
                 />
+
+                <div className="mb-3">
+                    <label htmlFor="subjectId" className="block text-gray-700 text-sm font-bold mb-2">Subject</label>
+                    <select
+                        id="subjectId"
+                        name="subjectId"
+                        value={formik.values.subjectId}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        disabled={isLoading}
+                        className="shadow appearance-none border border-gray-300 rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                        <option value="">Select a subject</option>
+                        {subjects.map((subject) => (
+                            <option key={subject.SubjectID} value={subject.SubjectID}>
+                                {subject.Name}
+                            </option>
+                        ))}
+                    </select>
+                    {formik.touched.subjectId && formik.errors.subjectId ? (
+                        <p className="text-red-500 text-xs italic mt-1">{formik.errors.subjectId}</p>
+                    ) : null}
+                </div>
 
                  <div className="mb-3">
                      <label htmlFor="description" className="block text-gray-700 text-sm font-bold mb-2">Description (Optional)</label>
