@@ -23,9 +23,13 @@ interface Subject {
     Name: string;
 }
 
-export default function DiscussionForm() {
+interface DiscussionFormProps {
+    defaultSubjectId?: number;
+}
+
+export default function DiscussionForm({ defaultSubjectId }: DiscussionFormProps) {
     const router = useRouter();
-    const { token } = useAuth();
+    const { token, user } = useAuth();
     const [subjects, setSubjects] = useState<Subject[]>([]);
 
     // loading and error state for API call
@@ -41,14 +45,19 @@ export default function DiscussionForm() {
                     throw new Error('Failed to fetch subjects');
                 }
                 const data = await response.json();
-                setSubjects(data);
+                if (user?.role === 'teacher' && user.subjectId) {
+                    const teacherSubject = data.find((s: Subject) => s.SubjectID === user.subjectId);
+                    setSubjects(teacherSubject ? [teacherSubject] : []);
+                } else {
+                    setSubjects(data);
+                }
             } catch (error: any) {
                 setError(error.message);
             }
         };
 
         fetchSubjects();
-    }, []);
+    }, [user]);
 
     const formik = useFormik({
         initialValues: {
@@ -96,6 +105,12 @@ export default function DiscussionForm() {
         },
     });
 
+    useEffect(() => {
+        if (defaultSubjectId) {
+            formik.setFieldValue('subjectId', String(defaultSubjectId));
+        }
+    }, [defaultSubjectId, formik.setFieldValue]);
+
     return (
         <div>
             <Link href="/discussions" className="text-sm text-blue-600 hover:underline mb-4 inline-block">
@@ -130,10 +145,10 @@ export default function DiscussionForm() {
                         value={formik.values.subjectId}
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
-                        disabled={isLoading}
+                        disabled={isLoading || user?.role === 'teacher'}
                         className="shadow appearance-none border border-gray-300 rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
-                        <option value="">Select a subject</option>
+                        {user?.role !== 'teacher' && <option value="">Select a subject</option>}
                         {subjects.map((subject) => (
                             <option key={subject.SubjectID} value={subject.SubjectID}>
                                 {subject.Name}

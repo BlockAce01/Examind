@@ -23,6 +23,35 @@ exports.getAllForums = async (req, res, next) => {
                 ORDER BY df."LastActivity" DESC NULLS LAST
             `;
             values.push(user.UserID);
+        } else if (user && user.Role === 'teacher') {
+            const teacherSubjectQuery = 'SELECT "SubjectID" FROM "TeacherSubject" WHERE "UserID" = $1';
+            const teacherSubjectResult = await db.query(teacherSubjectQuery, [user.UserID]);
+
+            if (teacherSubjectResult.rows.length === 0) {
+                return res.status(200).json({
+                    status: 'success',
+                    results: 0,
+                    data: {
+                        forums: [],
+                    },
+                });
+            }
+
+            const teacherSubjectId = teacherSubjectResult.rows[0].SubjectID;
+
+            query = `
+                SELECT 
+                    df.*,
+                    u."Name" AS "CreatorName",
+                    u."Role" AS "CreatorRole",
+                    s."Name" AS "SubjectName"
+                FROM "DiscussionForum" df
+                INNER JOIN "User" u ON df."CreatorUserID" = u."UserID"
+                LEFT JOIN "Subject" s ON df."SubjectID" = s."SubjectID"
+                WHERE df."SubjectID" = $1
+                ORDER BY df."LastActivity" DESC NULLS LAST
+            `;
+            values.push(teacherSubjectId);
         } else {
             query = `
                 SELECT 
