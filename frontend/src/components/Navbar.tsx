@@ -23,7 +23,7 @@ const Navbar = () => {
     <nav className="bg-blue-600 text-white p-4 shadow-md">
       <div className="container mx-auto flex justify-between items-center">
         {}
-        <Link href={isAuthenticated ? (user?.role === 'admin' ? "/admin" : "/dashboard") : "/app"} className="text-2xl font-bold hover:text-blue-200 flex items-center">
+        <Link href={isAuthenticated ? (user?.role === 'admin' ? "/admin" : (user?.role === 'teacher' ? "/teacher" : "/dashboard")) : "/app"} className="text-2xl font-bold hover:text-blue-200 flex items-center">
           <Image src="/apple-icon.png" alt="Examind Logo" width={40} height={40} className="mr-2" />
           Examind
         </Link>
@@ -31,14 +31,14 @@ const Navbar = () => {
           {}
           {isAuthenticated && (
             <>
-              {user?.role !== 'admin' && (
+              {user?.role !== 'admin' && user?.role !== 'teacher' && (
                 <Link href="/dashboard" className="hover:text-blue-200">Dashboard</Link>
               )}
-              <Link href="/quizzes" className="hover:text-blue-200 hidden sm:inline-block">Quizzes</Link> {/*hide on xs*/}              
+              <Link href="/quizzes" className="hover:text-blue-200 hidden sm:inline-block">Quizzes</Link>
               <Link href="/resources" className="hover:text-blue-200">Resources</Link>
-              <Link href="/discussions" className="hover:text-blue-200 hidden md:inline-block">Discussions</Link> {/*hide on xs,sm*/} 
-              <Link href="/challenges" className="hover:text-blue-200 hidden lg:inline-block">Challenges</Link> {/*hide on xs,sm,md*/}
-              <Link href="/leaderboard" className="hover:text-blue-200 hidden sm:inline-block">Leaderboard</Link> {/*hide on xs*/}            
+              <Link href="/discussions" className="hover:text-blue-200 hidden md:inline-block">Discussions</Link>
+              <Link href="/challenges" className="hover:text-blue-200 hidden lg:inline-block">Challenges</Link>
+              <Link href="/leaderboard" className="hover:text-blue-200 hidden sm:inline-block">Leaderboard</Link>
             </>
           )}
 
@@ -46,6 +46,13 @@ const Navbar = () => {
            {user?.role === 'admin' && (
               <Link href="/admin" className="hover:text-yellow-300 flex items-center text-sm bg-yellow-500 px-2 py-1 rounded">
                   <Cog8ToothIcon className="w-4 h-4 mr-1"/> Admin Panel
+              </Link>
+           )}
+
+           {/*teacher specific link*/}
+           {user?.role === 'teacher' && (
+              <Link href="/teacher" className="hover:text-yellow-300 flex items-center text-sm bg-green-500 px-2 py-1 rounded">
+                  <Cog8ToothIcon className="w-4 h-4 mr-1"/> Teacher Panel
               </Link>
            )}
 

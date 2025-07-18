@@ -9,6 +9,18 @@ router.get('/ranked', userController.getRankedUsers);
 // apply protect middleware to all routes below this point
 router.use(protect);
 
+// get the current user's profile
+router.get('/me', userController.getUserProfile);
+
+// get user stats
+router.get('/:id/stats', userController.getUserStats);
+
+// get user badges
+router.get('/:id/badges', userController.getUserBadges);
+
+// get user's recent activity
+router.get('/:id/activity', userController.getRecentActivity);
+
 // apply restrictTo middleware to all routes below this point
 router.use(restrictTo('admin'));
 

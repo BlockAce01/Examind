@@ -48,7 +48,7 @@ function QuizResultsPageContent() {
     const [result, setResult] = useState<QuizResultData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [selectedQuestions, setSelectedQuestions] = useState<Question[]>([]);
+    const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
 
     useEffect(() => {
         //validate quizId and authentication
@@ -130,19 +130,8 @@ function QuizResultsPageContent() {
     }
 
     // Handle question selection
-    const handleQuestionSelect = (question: Question, isSelected: boolean) => {
-        setSelectedQuestions(prevSelected => {
-            if (isSelected) {
-                // Add question if not already selected
-                if (!prevSelected.find(q => q.QuestionID === question.QuestionID)) {
-                    return [...prevSelected, question];
-                }
-            } else {
-                // Remove question if deselected
-                return prevSelected.filter(q => q.QuestionID !== question.QuestionID);
-            }
-            return prevSelected; // Return current state if no change
-        });
+    const handleQuestionSelect = (question: Question) => {
+        setSelectedQuestion(question);
     };
 
     //render the results
@@ -174,13 +163,14 @@ function QuizResultsPageContent() {
                                 {result.questions.map((question, index) => (
                                     <li key={question.QuestionID} className="bg-white p-5 rounded-lg shadow border border-gray-200">
                                         <div className="flex items-start mb-3">
-                                            {/* Checkbox for selection */}
+                                            {/* Radio button for selection */}
                                             <input
-                                                type="checkbox"
+                                                type="radio"
                                                 id={`select-q-${question.QuestionID}`}
-                                                checked={selectedQuestions.some(q => q.QuestionID === question.QuestionID)}
-                                                onChange={(e) => handleQuestionSelect(question, e.target.checked)}
-                                                className="mr-3 mt-1 w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                                                name="question-select"
+                                                checked={selectedQuestion?.QuestionID === question.QuestionID}
+                                                onChange={() => handleQuestionSelect(question)}
+                                                className="mr-3 mt-1 w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded-full focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                                             />
                                             <label htmlFor={`select-q-${question.QuestionID}`} className="font-medium text-lg text-gray-800 flex-1 cursor-pointer">
                                                 Question {index + 1}: {question.Text}
@@ -230,7 +220,7 @@ function QuizResultsPageContent() {
                     <div className="mt-10">
                         <h2 className="text-2xl font-semibold mb-4 text-gray-700 border-b pb-2">AI Assistant</h2>
                         {/* Pass questions to chatbot even if result not found */}
-                        <QuizResultChatbot selectedQuestions={selectedQuestions} quizTitle={result.quizTitle} quizId={result.quizId} />
+                        <QuizResultChatbot selectedQuestion={selectedQuestion} quizTitle={result.quizTitle} quizId={result.quizId} />
                     </div>
 
                     {/*Nav Buttons*/}

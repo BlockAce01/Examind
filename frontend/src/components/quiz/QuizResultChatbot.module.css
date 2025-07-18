@@ -1,0 +1,7 @@
+.chatbotResponse {
+    color: black;
+    background-color: lightgray;
+    padding: 10px;
+    white-space: pre-wrap;
+    word-break: break-all;
+}

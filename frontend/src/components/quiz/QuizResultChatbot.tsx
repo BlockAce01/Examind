@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
+import styles from './QuizResultChatbot.module.css';
 
 interface Question {
     QuestionID: number;
@@ -10,18 +11,18 @@ interface Question {
 }
 
 interface QuizResultChatbotProps {
-    selectedQuestions: Question[];
+    selectedQuestion: Question | null;
     quizTitle: string;
     quizId: number;
 }
 
-const QuizResultChatbot: React.FC<QuizResultChatbotProps> = ({ selectedQuestions, quizTitle, quizId }) => {
+const QuizResultChatbot: React.FC<QuizResultChatbotProps> = ({ selectedQuestion, quizTitle, quizId }) => {
     const [chatbotResponse, setChatbotResponse] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
     const handleGetExplanation = async () => {
-        if (selectedQuestions.length === 0) {
-            setChatbotResponse("Please select at least one question to get an explanation.");
+        if (!selectedQuestion) {
+            setChatbotResponse("Please select a question to get an explanation.");
             return;
         }
 
@@ -36,7 +37,7 @@ const QuizResultChatbot: React.FC<QuizResultChatbotProps> = ({ selectedQuestions
                 },
                 body: JSON.stringify({
                     quizTitle,
-                    selectedQuestions, // quizId is not sent as per plan, n8n doesn't need it
+                    selectedQuestions: [selectedQuestion], // API expects an array
                 }),
             });
 
@@ -68,26 +69,31 @@ const QuizResultChatbot: React.FC<QuizResultChatbotProps> = ({ selectedQuestions
         <div className="border p-4 rounded-lg shadow-sm bg-gray-50">
             <h3 className="text-lg font-semibold mb-2">AI Assistant</h3>
 
-            {selectedQuestions.length > 0 ? (
+            {selectedQuestion ? (
                 <div>
-                    <p className="mb-2">{selectedQuestions.length} question(s) selected.</p>
+                    <p className="mb-2">1 question selected.</p>
                     <Button onClick={handleGetExplanation} disabled={isLoading}>
-                        {isLoading ? 'Getting Explanation...' : 'Get Explanation for Selected Questions'}
+                        {isLoading ? 'Getting Explanation...' : 'Get Explanation for Selected Question'}
                     </Button>
                 </div>
             ) : (
-                <p>Select questions above to get explanations.</p>
+                <p>Select a question above to get an explanation.</p>
             )}
 
             {/* assistant interaction area */}
             <div className="mt-4 p-3 bg-white border rounded whitespace-pre-wrap">
                 {isLoading && <p className="text-gray-500">Loading explanation...</p>}
-                {/* Temporarily simplified rendering to debug */}
-                {chatbotResponse && <pre style={{ color: 'black', backgroundColor: 'lightgray', padding: '10px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{chatbotResponse}</pre>}
-                {!isLoading && !chatbotResponse && selectedQuestions.length === 0 && (
+                {/* Render HTML content safely */}
+                {chatbotResponse && (
+                    <div
+                        className={styles.chatbotResponse}
+                        dangerouslySetInnerHTML={{ __html: chatbotResponse }}
+                    />
+                )}
+                {!isLoading && !chatbotResponse && !selectedQuestion && (
                      <p className="text-gray-500">Chatbot responses will appear here.</p>
                 )}
-                 {!isLoading && !chatbotResponse && selectedQuestions.length > 0 && (
+                 {!isLoading && !chatbotResponse && selectedQuestion && (
                      <p className="text-gray-500">Click "Get Explanation" to see the AI's response.</p>
                 )}
             </div>

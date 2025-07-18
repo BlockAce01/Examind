@@ -73,3 +73,11 @@ exports.restrictTo = (...roles) => {
         next(); //user has permission and continue
     };
 };
+
+exports.admin = (req, res, next) => {
+    if (req.user && req.user.Role === 'admin') {
+        next();
+    } else {
+        res.status(403).json({ message: 'Not authorized as an admin' });
+    }
+};

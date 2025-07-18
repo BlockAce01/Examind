@@ -32,6 +32,9 @@ const ForumListItem: React.FC<ForumListItemProps> = ({ forum }) => {
              <p className="text-sm text-gray-600">{forum.Description}</p>
           )}
         </div>
+        {forum.SubjectName && (
+            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">{forum.SubjectName}</span>
+        )}
       </div>
       <div className="flex items-center space-x-4 text-xs text-gray-500 mt-2">
         <span className="flex items-center">
