@@ -65,4 +65,24 @@ export const getAiChatExplanation = async (quizTitle, selectedQuestions) => {
   }
 };
 
+export const checkUserBadges = async (userId) => {
+  try {
+    const response = await api.post(`/users/${userId}/badges/check`);
+    return response.data;
+  } catch (error) {
+    console.error('Error checking user badges:', error);
+    throw error;
+  }
+};
+
+export const getUserBadges = async (userId) => {
+  try {
+    const response = await api.get(`/users/${userId}/badges`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user badges:', error);
+    throw error;
+  }
+};
+
 export default api;
