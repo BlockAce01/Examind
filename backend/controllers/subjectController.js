@@ -34,11 +34,11 @@ const createSubject = async (req, res) => {
 // @route   POST /api/subjects/student
 // @access  Admin
 const assignStudentToSubject = async (req, res) => {
-  const { userId, subjectId } = req.body;
+  const { UserID, subjectId } = req.body;
   try {
     await pool.query(
       'INSERT INTO "StudentSubject" ("UserID", "SubjectID") VALUES ($1, $2)',
-      [userId, subjectId]
+      [UserID, subjectId]
     );
     res.json({ msg: 'Student assigned to subject' });
   } catch (err) {
@@ -51,11 +51,11 @@ const assignStudentToSubject = async (req, res) => {
 // @route   POST /api/subjects/teacher
 // @access  Admin
 const assignTeacherToSubject = async (req, res) => {
-    const { userId, subjectId } = req.body;
+    const { UserID, subjectId } = req.body;
     try {
       await pool.query(
         'INSERT INTO "TeacherSubject" ("UserID", "SubjectID") VALUES ($1, $2)',
-        [userId, subjectId]
+        [UserID, subjectId]
       );
       res.json({ msg: 'Teacher assigned to subject' });
     } catch (err) {
