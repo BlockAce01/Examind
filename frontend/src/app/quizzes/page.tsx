@@ -29,7 +29,7 @@ export default function QuizzesPage() {
     //get auth context
     const { user, token } = useAuth();
     //const currentUser: MockUserType | undefined = getMockLoggedInUser(SIMULATED_ROLE);
-    const isAdminOrTeacher = user?.role === 'teacher' || user?.role === 'admin';
+    const isAdminOrTeacher = user?.Role === 'teacher' || user?.Role === 'admin';
 
     //data fetching
     useEffect(() => {
@@ -75,7 +75,7 @@ export default function QuizzesPage() {
 
     useEffect(() => {
         const fetchStudentSubjects = async () => {
-            if (user?.role === 'student' && token) {
+            if (user?.Role === 'student' && token) {
                 try {
                     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
                     const response = await fetch(`${apiUrl}/api/v1/subjects/student`, {
@@ -96,14 +96,14 @@ export default function QuizzesPage() {
     }, [user, token]);
 
     //ensure keys match the QuizListItem type casing
-    const uniqueSubjects = user?.role === 'student' ? studentSubjects.map(s => s.Name) : getUniqueValues(quizzes, 'Subject');
+    const uniqueSubjects = user?.Role === 'student' ? studentSubjects.map(s => s.Name) : getUniqueValues(quizzes, 'Subject');
     const difficulties = ['Easy', 'Medium', 'Hard'];
 
     //client-side filter logic
     const filteredQuizzes = quizzes.filter(quiz => {
         const matchesSubject = selectedSubject === '' || quiz.Subject === selectedSubject;
         const matchesDifficulty = selectedDifficulty === '' || quiz.DifficultyLevel === selectedDifficulty;
-        const studentHasSubject = user?.role !== 'student' || uniqueSubjects.includes(quiz.Subject);
+        const studentHasSubject = user?.Role !== 'student' || uniqueSubjects.includes(quiz.Subject);
         return matchesSubject && matchesDifficulty && studentHasSubject;
     });
 

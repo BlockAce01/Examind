@@ -63,7 +63,13 @@ exports.register = async (req, res, next) => {
         //send success message
         res.status(201).json({
             message: 'User registered successfully!',
-            user: newUser
+            user: {
+                UserID: newUser.UserID,
+                Name: newUser.Name,
+                Email: newUser.Email,
+                Role: newUser.Role,
+                SubscriptionStatus: newUser.SubscriptionStatus,
+            }
         });
 
     } catch (err) {
@@ -116,11 +122,11 @@ exports.login = async (req, res, next) => {
         //debugging
         //preapare user infomation to send back
         const userResponseObject = {
-            userId: user.UserID,        
-            name: user.Name,            
-            email: user.Email,          
-            role: user.Role,          
-            subscriptionStatus: user.SubscriptionStatus, 
+            UserID: user.UserID,
+            Name: user.Name,
+            Email: user.Email,
+            Role: user.Role,
+            SubscriptionStatus: user.SubscriptionStatus,
             //add more fields
         };
 

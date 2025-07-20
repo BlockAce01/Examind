@@ -4,7 +4,19 @@ import React, { createContext, useState, useContext, useEffect, ReactNode } from
 // Ensure this imports the CORRECTED User type with lowercase keys
 import { type User } from '@/types/user'; // Or wherever your type is defined
 
-// ... interface AuthContextType ...
+interface AuthContextType {
+    isAuthenticated: boolean;
+    user: User | null;
+    token: string | null;
+    login: (userData: User, token: string) => void;
+    logout: () => void;
+    isLoading: boolean;
+}
+
+interface AuthProviderProps {
+    children: ReactNode;
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
@@ -54,7 +66,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             // DEBUGGING END (Login) 
 
             // Ensure userData has the expected structure before saving/setting
-            if (!userData || typeof userData !== 'object' || !userData.userId || !userData.role) {
+            if (!userData || typeof userData !== 'object' || !userData.UserID || !userData.Role) {
                 console.error('AuthContext Login: Received invalid userData structure!', userData);
                 // Optionally: throw an error or handle appropriately
                 return; // Prevent setting invalid state

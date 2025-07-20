@@ -34,7 +34,7 @@ export default function AddQuizPage() {
                 try {
                     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
                     let url = `${apiUrl}/api/v1/subjects`;
-                    if (user?.role === 'teacher') {
+                    if (user?.Role === 'teacher') {
                         url = `${apiUrl}/api/v1/subjects/teacher`;
                     }
                     const response = await fetch(url, {
