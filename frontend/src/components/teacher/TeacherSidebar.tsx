@@ -14,7 +14,9 @@ import { useAuth } from '@/context/AuthContext';
 
 const teacherNavLinks = [
   { name: 'Manage Quizzes', href: '/teacher/quizzes', icon: QuestionMarkCircleIcon },
+  { name: 'Add Quiz', href: '/teacher/quizzes/new', icon: QuestionMarkCircleIcon },
   { name: 'Manage Resources', href: '/teacher/resources', icon: BookOpenIcon },
+  { name: 'Add Resource', href: '/teacher/resources/new', icon: BookOpenIcon },
 ];
 
 const TeacherSidebar = () => {
