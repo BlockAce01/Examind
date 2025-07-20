@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import WaitingState from './WaitingState';
 import styles from './QuizResultChatbot.module.css';
-import api from '@/lib/api';
+import { getAiChatExplanation } from '@/lib/api';
 
 interface Question {
     QuestionID: number;
@@ -32,15 +32,8 @@ const QuizResultChatbot: React.FC<QuizResultChatbotProps> = ({ selectedQuestion,
         setChatbotResponse(null);
 
          try {
-            const response = await api.post('/ai-chat', {
-                quizTitle,
-                selectedQuestions: [selectedQuestion], // API expects an array
-            });
-
-            let explanation = response.data.explanation;
-
-            setChatbotResponse(explanation);
-
+            const data = await getAiChatExplanation(quizTitle, [selectedQuestion]);
+            setChatbotResponse(data.explanation);
         } catch (error) {
             console.error("Failed to get explanation:", error);
             setChatbotResponse(`Error getting explanation: ${error instanceof Error ? error.message : String(error)}`);

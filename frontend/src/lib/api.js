@@ -52,4 +52,17 @@ export const getRecentActivity = async (userId) => {
   }
 };
 
+export const getAiChatExplanation = async (quizTitle, selectedQuestions) => {
+  try {
+    const response = await api.post('/api/ai-chat', {
+      quizTitle,
+      selectedQuestions,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching AI chat explanation:', error);
+    throw error;
+  }
+};
+
 export default api;
