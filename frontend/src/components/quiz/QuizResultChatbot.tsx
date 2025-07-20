@@ -31,7 +31,7 @@ const QuizResultChatbot: React.FC<QuizResultChatbotProps> = ({ selectedQuestion,
         setChatbotResponse(null);
 
          try {
-            const response = await fetch('/api/ai-chat/explanation', {
+            const response = await fetch('/api/ai-chat', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
