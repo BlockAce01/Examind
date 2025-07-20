@@ -7,6 +7,7 @@ const PORT = process.env.PORT || 3001;
 
 //     middleware
 //enable CORS for all routes
+app.use(cors());
 
 //parse JSON request bodies
 app.use(express.json());
