@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import WaitingState from './WaitingState';
 import styles from './QuizResultChatbot.module.css';
+import api from '@/lib/api';
 
 interface Question {
     QuestionID: number;
@@ -31,24 +32,12 @@ const QuizResultChatbot: React.FC<QuizResultChatbotProps> = ({ selectedQuestion,
         setChatbotResponse(null);
 
          try {
-            const response = await fetch('/api/ai-chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    quizTitle,
-                    selectedQuestions: [selectedQuestion], // API expects an array
-                }),
+            const response = await api.post('/ai-chat', {
+                quizTitle,
+                selectedQuestions: [selectedQuestion], // API expects an array
             });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            let explanation = data.explanation;
+            let explanation = response.data.explanation;
 
             setChatbotResponse(explanation);
 
