@@ -54,7 +54,7 @@ export const getRecentActivity = async (userId) => {
 
 export const getAiChatExplanation = async (quizTitle, selectedQuestions) => {
   try {
-    const response = await api.post('/api/ai-chat', {
+    const response = await api.post('/ai-chat/explanation', {
       quizTitle,
       selectedQuestions,
     });
