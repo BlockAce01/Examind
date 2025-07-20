@@ -32,3 +32,5 @@ services:
         value: "koyebdb"
       - key: JWT_SECRET
         value: "CariPonnaInduma@200212"
+      - key: N8N_WEBHOOK_URL
+        value: "https://primary-production-275b.up.railway.app/webhook/2a8e3d95-d58c-414e-86fd-374dad086423-dfwse345sdfsd-gyrt7456gfbzdfg"
