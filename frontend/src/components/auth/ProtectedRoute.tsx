@@ -35,7 +35,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
     // 2.check role if allowedRoles is provided and not empty
     if (allowedRoles && allowedRoles.length > 0) {
-      const userRole = user?.role;
+      const userRole = user?.Role;
       if (!userRole || !allowedRoles.includes(userRole)) {
         console.log(`[ProtectedRoute] Role mismatch. Allowed: ${allowedRoles.join(', ')}, User has: ${userRole}. Redirecting.`);
         //redirect unauthorized users
@@ -56,7 +56,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   //determine if the user meets role requirements *before* rendering children
-  const meetsRoleRequirements = !allowedRoles || allowedRoles.length === 0 || (user?.role && allowedRoles.includes(user.role));
+  const meetsRoleRequirements = !allowedRoles || allowedRoles.length === 0 || (user?.Role && allowedRoles.includes(user.Role));
 
   //if not authenticated doesn't meet role requirements, show spinner while redirecting
   if (!isAuthenticated || !meetsRoleRequirements) {
