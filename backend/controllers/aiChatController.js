@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const n8nWebhookUrl = 'https://primary-production-275b.up.railway.app/webhook/2a8e3d95-d58c-414e-86fd-374dad086423-dfwse345sdfsd-gyrt7456gfbzdfg';
+const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
 
 const getAIExplanation = async (req, res) => {
     const { quizTitle, selectedQuestions } = req.body;
@@ -14,7 +14,7 @@ const getAIExplanation = async (req, res) => {
             const correctAnswer = q.Options[q.CorrectAnswerIndex];
             const submittedAnswer = q.SubmittedAnswerIndex !== null ? q.Options[q.SubmittedAnswerIndex] : null;
             return {
-                text: q.Text,
+                question: q.Text,
                 options: q.Options,
                 correctAnswer: correctAnswer,
                 submittedAnswer: submittedAnswer,
