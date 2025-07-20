@@ -22,7 +22,9 @@ export default function AdminDiscussionsPage() {
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
             const response = await fetch(`${apiUrl}/api/v1/discussions`, {
-                 headers: { /*add auth header if needed*/ },
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
             });
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
