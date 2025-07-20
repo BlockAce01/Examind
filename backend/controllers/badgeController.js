@@ -18,7 +18,7 @@ const awardBadge = async (UserID, badgeId) => {
 };
 
 exports.checkAndAwardBadges = async (req, res, next) => {
-    const { UserID } = req.params;
+    const { id: UserID } = req.params;
 
     try {
         // --- Quiz Master Badges ---
@@ -37,6 +37,10 @@ exports.checkAndAwardBadges = async (req, res, next) => {
         // --- Point Collector Badges ---
         const pointsQuery = 'SELECT "Points" FROM "User" WHERE "UserID" = $1';
         const pointsResult = await db.query(pointsQuery, [UserID]);
+
+        if (pointsResult.rows.length === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
         const points = pointsResult.rows[0].Points;
 
         if (points >= 100) {

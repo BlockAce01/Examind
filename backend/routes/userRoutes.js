@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
+const badgeController = require('../controllers/badgeController');
 const { protect, restrictTo } = require('../middleware/authMiddleware');
 
 // get ranked users for leaderboard
@@ -17,6 +18,9 @@ router.get('/:id/stats', userController.getUserStats);
 
 // get user badges
 router.get('/:id/badges', userController.getUserBadges);
+
+// check for and award new badges
+router.post('/:id/badges/check', badgeController.checkAndAwardBadges);
 
 // get user's recent activity
 router.get('/:id/activity', userController.getRecentActivity);
