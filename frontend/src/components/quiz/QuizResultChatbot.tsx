@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
+import WaitingState from './WaitingState';
 import styles from './QuizResultChatbot.module.css';
 
 interface Question {
@@ -30,7 +31,7 @@ const QuizResultChatbot: React.FC<QuizResultChatbotProps> = ({ selectedQuestion,
         setChatbotResponse(null);
 
          try {
-            const response = await fetch('/api/ai-chat/explanation', { // Assuming backend runs on the same host/port or proxied
+            const response = await fetch('/api/ai-chat/explanation', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -49,12 +50,6 @@ const QuizResultChatbot: React.FC<QuizResultChatbotProps> = ({ selectedQuestion,
             const data = await response.json();
             let explanation = data.explanation;
 
-            // Ensure single backslashes for LaTeX commands if n8n might return double backslashes.
-            if (explanation) {
-                explanation = explanation.replace(/\\\\/g, '\\');
-            }
-            
-            console.log("Explanation received in frontend:", explanation); // <--- ADD THIS LINE
             setChatbotResponse(explanation);
 
         } catch (error) {
@@ -82,7 +77,7 @@ const QuizResultChatbot: React.FC<QuizResultChatbotProps> = ({ selectedQuestion,
 
             {/* assistant interaction area */}
             <div className="mt-4 p-3 bg-white border rounded whitespace-pre-wrap">
-                {isLoading && <p className="text-gray-500">Loading explanation...</p>}
+                {isLoading && <WaitingState />}
                 {/* Render HTML content safely */}
                 {chatbotResponse && (
                     <div

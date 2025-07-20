@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const n8nWebhookUrl = 'http://localhost:5678/webhook-test/2a8e3d95-d58c-414e-86fd-374dad086423-dfwse345sdfsd-gyrt7456gfbzdfg';
+const n8nWebhookUrl = 'https://primary-production-275b.up.railway.app/webhook/2a8e3d95-d58c-414e-86fd-374dad086423-dfwse345sdfsd-gyrt7456gfbzdfg';
 
 const getAIExplanation = async (req, res) => {
     const { quizTitle, selectedQuestions } = req.body;
