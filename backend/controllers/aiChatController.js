@@ -28,6 +28,7 @@ const getAIExplanation = async (req, res) => {
 
         // Log the payload being sent to n8n
         console.log('Sending payload to n8n:', JSON.stringify(n8nPayload, null, 2));
+        console.log('Webhook URL:', n8nWebhookUrl);
 
         const n8nResponse = await axios.post(n8nWebhookUrl, n8nPayload, {
             headers: {
