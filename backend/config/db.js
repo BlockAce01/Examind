@@ -26,6 +26,14 @@ pool.connect((err, client, release) => {
 
 //export the pool's query method
 module.exports = {
-    query: (text, params) => pool.query(text, params),
+    query: async (text, params) => {
+        const client = await pool.connect();
+        try {
+            const res = await client.query(text, params);
+            return res;
+        } finally {
+            client.release();
+        }
+    },
     pool: pool //export the pool itself when: transactions etc.
 };

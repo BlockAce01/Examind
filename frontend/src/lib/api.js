@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API__URL;
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('authToken');
@@ -8,7 +8,7 @@ const getAuthHeaders = () => {
 };
 
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: `${API_URL}/api/v1`,
   headers: {
     'Content-Type': 'application/json',
   },
