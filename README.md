@@ -12,6 +12,8 @@ Examind is a full-stack web application designed to provide an interactive and e
   - [Configuration](#configuration)
   - [Running the Application](#running-the-application)
 - [API Endpoints](#api-endpoints)
+- [Project Structure](#project-structure)
+- [Contributing](#contributing)
 - [License](#license)
 
 ## Features
@@ -40,6 +42,13 @@ Examind is a full-stack web application designed to provide an interactive and e
 - **Framework:** Node.js, Express
 - **Database:** PostgreSQL
 - **Authentication:** bcrypt, JSON Web Tokens
+- **Dependencies:**
+  - `bcrypt`: Password hashing
+  - `cors`: Cross-Origin Resource Sharing
+  - `dotenv`: Environment variable management
+  - `express`: Web framework
+  - `jsonwebtoken`: JWT authentication
+  - `pg`: PostgreSQL client
 
 ## Getting Started
 
@@ -116,6 +125,44 @@ The backend provides a RESTful API with the following main endpoints:
 - `/api/badges`: Badge and gamification system
 - `/api/stats`: Application statistics
 - `/api/ai-chat`: AI chatbot functionality
+
+## Project Structure
+
+The project is organized into two main directories: `frontend` and `backend`.
+
+### Frontend
+
+The `frontend` directory contains the Next.js application, with the following key folders:
+
+-   `src/app`: Main application pages and routes
+-   `src/components`: Reusable React components
+-   `src/lib`: Utility functions and API helpers
+-   `src/context`: React context providers
+-   `public`: Static assets (images, fonts)
+
+### Backend
+
+The `backend` directory contains the Node.js/Express server, with the following structure:
+
+-   `config`: Database configuration and schema
+-   `controllers`: Request handlers and business logic
+-   `middleware`: Express middleware functions
+-   `routes`: API route definitions
+
+## Contributing
+
+Contributions are welcome! If you'd like to contribute to Examind, please follow these steps:
+
+1.  **Fork the repository.**
+2.  **Create a new branch** for your feature or bug fix:
+    ```bash
+    git checkout -b feature/your-feature-name
+    ```
+3.  **Make your changes** and commit them with a clear message.
+4.  **Push your changes** to your forked repository.
+5.  **Create a pull request** to the `main` branch of the original repository.
+
+Please ensure your code follows the existing style and that you have tested your changes thoroughly.
 
 ## License
 
