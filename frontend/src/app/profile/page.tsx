@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import StatCard from '@/components/dashboard/StatCard';
 import Button from '@/components/ui/Button';
 import { UserCircleIcon, AcademicCapIcon, SparklesIcon, TrophyIcon, Cog6ToothIcon, LockClosedIcon } from '@heroicons/react/24/outline';
-import axios from 'axios';
+import { getUserStats, checkUserBadges, getUserBadges } from '@/lib/api';
 import Badge from '@/components/ui/Badge';
 import { Badge as BadgeType } from '@/types/user';
 
@@ -29,26 +29,16 @@ function ProfilePageContent() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (currentUser && currentUser.UserID && token) {
+        if (currentUser && currentUser.UserID) {
             const fetchData = async () => {
                 try {
-                    //fetch stats
-                    const statsResponse = await axios.get(`http://localhost:3001/api/v1/users/${currentUser.UserID}/stats`, {
-                        headers: { Authorization: `Bearer ${token}` },
-                    });
-                    setStats(statsResponse.data.data);
+                    const statsData = await getUserStats(currentUser.UserID);
+                    setStats(statsData.data);
 
-                    //trigger badge check
-                    await axios.post(`http://localhost:3001/api/v1/users/${currentUser.UserID}/badges/check`, {}, {
-                        headers: { Authorization: `Bearer ${token}` },
-                    });
+                    await checkUserBadges(currentUser.UserID);
 
-                    //fetch badges
-                    const badgesResponse = await axios.get(`http://localhost:3001/api/v1/users/${currentUser.UserID}/badges`, {
-                        headers: { Authorization: `Bearer ${token}` },
-                    });
-                    setBadges(badgesResponse.data.data);
-
+                    const badgesData = await getUserBadges(currentUser.UserID);
+                    setBadges(badgesData.data);
                 } catch (error) {
                     console.error('Failed to fetch user data:', error);
                 } finally {
@@ -57,7 +47,7 @@ function ProfilePageContent() {
             };
             fetchData();
         }
-    }, [currentUser, token]);
+    }, [currentUser]);
 
     if (!currentUser) {
         return <div className="text-center p-10 text-gray-500">Loading user data...</div>;
