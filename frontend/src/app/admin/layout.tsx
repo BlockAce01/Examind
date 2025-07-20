@@ -31,10 +31,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode; }
     }
 
     // determine admin status
-    const isAdmin = isAuthenticated && user?.role === 'admin';
+    const isAdmin = isAuthenticated && user?.Role === 'admin';
 
     // isAdmin
-    console.log(`[AdminLayout] Checking: isAuthenticated (${isAuthenticated}) && user?.role (${user?.role}) === 'admin' --> isAdmin: ${isAdmin}`);
+    console.log(`[AdminLayout] Checking: isAuthenticated (${isAuthenticated}) && user?.Role (${user?.Role}) === 'admin' --> isAdmin: ${isAdmin}`);
 
     if (!isAdmin) {
         console.log('[AdminLayout] Rendering Access Denied');
@@ -42,7 +42,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode; }
             <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
                 <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
                 <p className="text-gray-700 mb-6">You do not have permission to view this page.</p>
-                <p className="text-xs text-gray-500">Auth Status: {isAuthenticated ? 'Logged In' : 'Logged Out'}, Role Detected: "{user?.role ?? 'N/A'}"</p>
+                <p className="text-xs text-gray-500">Auth Status: {isAuthenticated ? 'Logged In' : 'Logged Out'}, Role Detected: "{user?.Role ?? 'N/A'}"</p>
                 <Link href={isAuthenticated ? "/dashboard" : "/login"} className='mt-4'>
                     <Button variant="primary">
                         {isAuthenticated ? "Go to Dashboard" : "Go to Login"}

@@ -46,10 +46,10 @@ function DashboardPageContent() {
   const [activities, setActivities] = useState<Activity[]>([]);
 
   useEffect(() => {
-    if (user?.userId) {
+    if (user?.UserID) {
       const fetchStats = async () => {
         try {
-          const data = await getUserStats(user.userId);
+          const data = await getUserStats(user.UserID);
           setStats(data.data);
         } catch (error) {
           console.error('Failed to fetch user stats', error);
@@ -65,7 +65,7 @@ function DashboardPageContent() {
       };
       const fetchActivities = async () => {
         try {
-          const data = await getRecentActivity(user.userId);
+          const data = await getRecentActivity(user.UserID);
           setActivities(data.data.activities);
         } catch (error) {
           console.error('Failed to fetch recent activities', error);
@@ -77,7 +77,7 @@ function DashboardPageContent() {
     }
   }, [user]);
 
-  const displayName = user?.name ?? 'User';
+  const displayName = user?.Name ?? 'User';
 
   return (
     <div>

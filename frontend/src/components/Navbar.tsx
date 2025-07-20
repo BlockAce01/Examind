@@ -23,7 +23,7 @@ const Navbar = () => {
     <nav className="bg-blue-600 text-white p-4 shadow-md">
       <div className="container mx-auto flex justify-between items-center">
         {}
-        <Link href={isAuthenticated ? (user?.role === 'admin' ? "/admin" : (user?.role === 'teacher' ? "/teacher" : "/dashboard")) : "/app"} className="text-2xl font-bold hover:text-blue-200 flex items-center">
+        <Link href={isAuthenticated ? (user?.Role === 'admin' ? "/admin" : (user?.Role === 'teacher' ? "/teacher" : "/dashboard")) : "/app"} className="text-2xl font-bold hover:text-blue-200 flex items-center">
           <Image src="/apple-icon.png" alt="Examind Logo" width={40} height={40} className="mr-2" />
           Examind
         </Link>
@@ -31,7 +31,7 @@ const Navbar = () => {
           {}
           {isAuthenticated && (
             <>
-              {user?.role !== 'admin' && user?.role !== 'teacher' && (
+              {user?.Role !== 'admin' && user?.Role !== 'teacher' && (
                 <Link href="/dashboard" className="hover:text-blue-200">Dashboard</Link>
               )}
               <Link href="/quizzes" className="hover:text-blue-200 hidden sm:inline-block">Quizzes</Link>
@@ -43,14 +43,14 @@ const Navbar = () => {
           )}
 
            {/*admin specific link*/}
-           {user?.role === 'admin' && (
+           {user?.Role === 'admin' && (
               <Link href="/admin" className="hover:text-yellow-300 flex items-center text-sm bg-yellow-500 px-2 py-1 rounded">
                   <Cog8ToothIcon className="w-4 h-4 mr-1"/> Admin Panel
               </Link>
            )}
 
            {/*teacher specific link*/}
-           {user?.role === 'teacher' && (
+           {user?.Role === 'teacher' && (
               <Link href="/teacher" className="hover:text-yellow-300 flex items-center text-sm bg-green-500 px-2 py-1 rounded">
                   <Cog8ToothIcon className="w-4 h-4 mr-1"/> Teacher Panel
               </Link>
@@ -60,7 +60,7 @@ const Navbar = () => {
           {isAuthenticated ? (
             <> {/*profile and logout*/}
              <Link href="/profile" className="bg-white text-blue-600 px-3 py-1 rounded hover:bg-blue-100 text-sm">
-               {user?.name || 'Profile'} {/*username*/}
+               {user?.Name || 'Profile'} {/*username*/}
              </Link>
              {/*logout*/}
               <button

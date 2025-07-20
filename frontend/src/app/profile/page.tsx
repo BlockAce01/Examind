@@ -29,22 +29,22 @@ function ProfilePageContent() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (currentUser && currentUser.userId && token) {
+        if (currentUser && currentUser.UserID && token) {
             const fetchData = async () => {
                 try {
                     //fetch stats
-                    const statsResponse = await axios.get(`http://localhost:3001/api/v1/users/${currentUser.userId}/stats`, {
+                    const statsResponse = await axios.get(`http://localhost:3001/api/v1/users/${currentUser.UserID}/stats`, {
                         headers: { Authorization: `Bearer ${token}` },
                     });
                     setStats(statsResponse.data.data);
 
                     //trigger badge check
-                    await axios.post(`http://localhost:3001/api/v1/badges/check/${currentUser.userId}`, {}, {
+                    await axios.post(`http://localhost:3001/api/v1/users/${currentUser.UserID}/badges/check`, {}, {
                         headers: { Authorization: `Bearer ${token}` },
                     });
 
                     //fetch badges
-                    const badgesResponse = await axios.get(`http://localhost:3001/api/v1/users/${currentUser.userId}/badges`, {
+                    const badgesResponse = await axios.get(`http://localhost:3001/api/v1/users/${currentUser.UserID}/badges`, {
                         headers: { Authorization: `Bearer ${token}` },
                     });
                     setBadges(badgesResponse.data.data);
@@ -71,10 +71,10 @@ function ProfilePageContent() {
         {/* Left Column: Profile Info */}
         <div className="md:col-span-1 bg-white p-6 rounded-lg shadow-md border border-gray-200 text-center">
         <div className="relative w-24 h-24 mx-auto mb-4 overflow-hidden rounded-full"> {/* Added overflow-hidden and moved rounded-full here */}
-    {currentUser.avatarUrl ? (
+    {currentUser.AvatarURL ? (
         <Image
-            src={currentUser.avatarUrl}
-            alt={`${currentUser.name}'s avatar`}
+            src={currentUser.AvatarURL}
+            alt={`${currentUser.Name}'s avatar`}
             fill 
             className="object-cover" 
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" 
@@ -83,14 +83,14 @@ function ProfilePageContent() {
         <UserCircleIcon className="w-24 h-24 text-gray-400" />
     )}
 </div>
-          <h2 className="text-xl font-semibold text-gray-900">{currentUser.name ?? 'User Name'}</h2>
-          <p className="text-sm text-gray-500 mb-1">{currentUser.email ?? 'No email provided'}</p>
+          <h2 className="text-xl font-semibold text-gray-900">{currentUser.Name ?? 'User Name'}</h2>
+          <p className="text-sm text-gray-500 mb-1">{currentUser.Email ?? 'No email provided'}</p>
           <span className={`capitalize text-xs font-medium px-2 py-0.5 rounded-full ${
-              currentUser.role === 'admin' ? 'bg-red-100 text-red-800' :
-              currentUser.role === 'teacher' ? 'bg-blue-100 text-blue-800' :
+              currentUser.Role === 'admin' ? 'bg-red-100 text-red-800' :
+              currentUser.Role === 'teacher' ? 'bg-blue-100 text-blue-800' :
               'bg-green-100 text-green-800'
           }`}>
-            {currentUser.role ?? 'N/A'}
+            {currentUser.Role ?? 'N/A'}
           </span>
           <br />
            <Button variant="secondary" className="mt-4 text-xs">Edit Profile</Button> 
@@ -99,7 +99,7 @@ function ProfilePageContent() {
         {/* Right Column: Stats and Settings */}
         <div className="md:col-span-2 space-y-6">
           {/* Achievements */}
-          {currentUser.role === 'student' && (
+          {currentUser.Role === 'student' && (
               <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
                   <h3 className="text-lg font-semibold mb-4 text-gray-700">Achievements</h3>
                   {loading ? (
@@ -115,7 +115,7 @@ function ProfilePageContent() {
           )}
 
           {/* Badges */}
-          {currentUser.role === 'student' && (
+          {currentUser.Role === 'student' && (
               <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
                   <h3 className="text-lg font-semibold mb-4 text-gray-700">My Badges</h3>
                   {loading ? (

@@ -45,12 +45,7 @@ export default function DiscussionForm({ defaultSubjectId }: DiscussionFormProps
                     throw new Error('Failed to fetch subjects');
                 }
                 const data = await response.json();
-                if (user?.role === 'teacher' && user.subjectId) {
-                    const teacherSubject = data.find((s: Subject) => s.SubjectID === user.subjectId);
-                    setSubjects(teacherSubject ? [teacherSubject] : []);
-                } else {
-                    setSubjects(data);
-                }
+                setSubjects(data);
             } catch (error: any) {
                 setError(error.message);
             }
@@ -145,10 +140,10 @@ export default function DiscussionForm({ defaultSubjectId }: DiscussionFormProps
                         value={formik.values.subjectId}
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
-                        disabled={isLoading || user?.role === 'teacher'}
+                        disabled={isLoading}
                         className="shadow appearance-none border border-gray-300 rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
-                        {user?.role !== 'teacher' && <option value="">Select a subject</option>}
+                        <option value="">Select a subject</option>
                         {subjects.map((subject) => (
                             <option key={subject.SubjectID} value={subject.SubjectID}>
                                 {subject.Name}

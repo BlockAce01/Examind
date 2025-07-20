@@ -27,7 +27,7 @@ export default function ResourcesPage() {
 
     // Get user role from auth context
     const { user } = useAuth();
-    const isAdminOrTeacher = user?.role === 'teacher' || user?.role === 'admin';
+    const isAdminOrTeacher = user?.Role === 'teacher' || user?.Role === 'admin';
 
     //Data Fetching
     useEffect(() => {
@@ -99,6 +99,7 @@ export default function ResourcesPage() {
                         value={selectedSubject}
                         onChange={(e) => setSelectedSubject(e.target.value)}
                         className="p-2 border rounded bg-white focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                        aria-label="Filter by subject"
                     >
                         <option value="">All Subjects</option>
                         {uniqueSubjects.map((subject, index) => (
@@ -109,6 +110,7 @@ export default function ResourcesPage() {
                         value={selectedType}
                         onChange={(e) => setSelectedType(e.target.value)}
                          className="p-2 border rounded bg-white focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                         aria-label="Filter by type"
                     >
                         <option value="">All Types</option>
                         {uniqueTypes.map((type, index) => (
