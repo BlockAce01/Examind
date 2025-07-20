@@ -104,7 +104,7 @@ Examind is a full-stack web application designed to provide an interactive and e
     cd backend
     npm run dev
     ```
-    The backend will be running on `http://localhost:3001`.
+    The backend will be running on `http://localhost:8080`.
 
 2.  **Start the frontend development server:**
     ```bash
