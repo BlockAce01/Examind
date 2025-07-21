@@ -66,10 +66,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode; }
     console.log('[AdminLayout] Rendering admin Content');
     return (
         <div className="flex min-h-screen bg-gray-100">
-            <div ref={sidebarRef}>
-                <AdminSidebar isOpen={isSidebarOpen} toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
+            <div ref={sidebarRef} className={`fixed top-0 left-0 z-40 w-64 h-screen bg-gray-800 text-gray-300 flex-col min-h-screen transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
+                <AdminSidebar />
             </div>
-            <main className={`flex-1 p-6 md:p-10 transition-all duration-300 ${isSidebarOpen ? 'lg:ml-64' : 'ml-0'}`}>
+            <main className="flex-1 p-6 md:p-10 lg:ml-64">
                 <div className="lg:hidden mb-4">
                     <button onClick={() => setSidebarOpen(!isSidebarOpen)} title="Open sidebar">
                         <Bars3Icon className="w-6 h-6" />
