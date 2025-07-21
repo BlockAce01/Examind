@@ -1,14 +1,24 @@
 'use client';
 
-import React, { useEffect } from 'react'; 
+import React, { useEffect, useState, useRef } from 'react';
 import TeacherSidebar from '@/components/teacher/TeacherSidebar';
 import { useAuth } from '@/context/AuthContext';
+import { useOnClickOutside } from '@/hooks/useOnClickOutside';
+import { Bars3Icon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import Button from '@/components/ui/Button';
 import Spinner from '@/components/ui/Spinner';
 
 export default function TeacherLayout({ children }: { children: React.ReactNode; }) {
     const { user, isAuthenticated, isLoading } = useAuth();
+    const [isSidebarOpen, setSidebarOpen] = useState(false);
+    const sidebarRef = useRef<HTMLDivElement>(null);
+
+    useOnClickOutside(sidebarRef as React.RefObject<HTMLElement>, () => {
+        if (isSidebarOpen) {
+            setSidebarOpen(false);
+        }
+    });
 
     useEffect(() => {
         console.log('--- TeacherLayout User State Updated ---');
@@ -56,8 +66,15 @@ export default function TeacherLayout({ children }: { children: React.ReactNode;
     console.log('[TeacherLayout] Rendering teacher Content');
     return (
         <div className="flex min-h-screen bg-gray-100">
-            <TeacherSidebar />
-            <main className="flex-1 p-6 md:p-10">
+            <div ref={sidebarRef}>
+                <TeacherSidebar isOpen={isSidebarOpen} toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
+            </div>
+            <main className={`flex-1 p-6 md:p-10 transition-all duration-300 ${isSidebarOpen ? 'lg:ml-64' : 'ml-0'}`}>
+                <div className="lg:hidden mb-4">
+                    <button onClick={() => setSidebarOpen(!isSidebarOpen)} title="Open sidebar">
+                        <Bars3Icon className="w-6 h-6" />
+                    </button>
+                </div>
                 {children}
             </main>
         </div>

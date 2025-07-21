@@ -12,6 +12,11 @@ import {
 } from '@heroicons/react/24/outline';
 import { useAuth } from '@/context/AuthContext';
 
+interface TeacherSidebarProps {
+  isOpen: boolean;
+  toggleSidebar: () => void;
+}
+
 const teacherNavLinks = [
   { name: 'Manage Quizzes', href: '/teacher/quizzes', icon: QuestionMarkCircleIcon },
   { name: 'Add Quiz', href: '/teacher/quizzes/new', icon: QuestionMarkCircleIcon },
@@ -19,14 +24,14 @@ const teacherNavLinks = [
   { name: 'Add Resource', href: '/teacher/resources/new', icon: BookOpenIcon },
 ];
 
-const TeacherSidebar = () => {
+const TeacherSidebar: React.FC<TeacherSidebarProps> = ({ isOpen, toggleSidebar }) => {
   const pathname = usePathname(); // Get the current URL path
   const { logout } = useAuth();
 
   return (
-    <aside className="w-64 bg-gray-800 text-gray-300 flex flex-col min-h-screen">
+    <aside className={`fixed top-0 left-0 z-40 w-64 h-screen bg-gray-800 text-gray-300 flex-col min-h-screen transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:flex`}>
       {/* Header */}
-      <div className="h-16 flex items-center justify-center bg-gray-900">
+      <div className="h-16 flex items-center justify-between bg-gray-900 px-4">
          <Link href="/teacher" className='flex items-center gap-2'>
              <AcademicCapIcon className="w-8 h-8 text-blue-400"/>
              <span className="text-xl font-semibold text-white">Examind Teacher</span>
