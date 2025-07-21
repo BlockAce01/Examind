@@ -14,7 +14,6 @@ import {
 } from '@heroicons/react/24/outline';
 
 const adminNavLinks = [
-  { name: 'Dashboard', href: '/admin', icon: ChartBarIcon },
   { name: 'Manage Quizzes', href: '/admin/quizzes', icon: QuestionMarkCircleIcon },
   { name: 'Manage Resources', href: '/admin/resources', icon: BookOpenIcon },
   { name: 'Manage Discussions', href: '/admin/discussions', icon: ChatBubbleLeftRightIcon },

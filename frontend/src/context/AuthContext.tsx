@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 // Ensure this imports the CORRECTED User type with lowercase keys
 import { type User } from '@/types/user'; // Or wherever your type is defined
 
@@ -23,6 +24,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const router = useRouter();
 
     useEffect(() => {
         console.log('--- AuthContext Initial Load ---'); // Log mount
@@ -78,6 +80,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setToken(token);
             setUser(userData); // Set the validated user data
             console.log('AuthContext State Updated: User set, isAuthenticated should be true.');
+
         } catch (error) {
             console.error("Error saving auth state to localStorage:", error);
         }
@@ -91,6 +94,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setToken(null);
             setUser(null);
             console.log('Auth state cleared from context and localStorage.');
+            router.push('/login');
         } catch (error) {
             console.error("Error clearing auth state from localStorage:", error);
         }
