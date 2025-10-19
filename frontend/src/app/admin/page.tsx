@@ -35,7 +35,7 @@ export default function AdminDashboardPage() {
             setIsLoading(true);
             setError(null);
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
                 const headers = { 'Authorization': `Bearer ${token}` };
 
                 const [quizRes, resourceRes, discussionRes, userRes] = await Promise.all([

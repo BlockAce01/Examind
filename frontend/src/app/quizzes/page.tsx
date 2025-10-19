@@ -40,7 +40,7 @@ export default function QuizzesPage() {
                 return;
             }
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
                 const response = await fetch(`${apiUrl}/api/v1/quizzes`, {
                     headers: {
                         'Authorization': `Bearer ${token}`, //Add Authorization
@@ -77,7 +77,7 @@ export default function QuizzesPage() {
         const fetchStudentSubjects = async () => {
             if (user?.Role === 'student' && token) {
                 try {
-                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
                     const response = await fetch(`${apiUrl}/api/v1/subjects/student`, {
                         headers: {
                             'Authorization': `Bearer ${token}`,

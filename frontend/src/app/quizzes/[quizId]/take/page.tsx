@@ -54,7 +54,7 @@ function QuizTakePageContent() {
 
         const fetchQuizDetails = async () => {
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
                 const response = await fetch(`${apiUrl}/api/v1/quizzes/${quizIdNum}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`, //add authorization
@@ -134,7 +134,7 @@ function QuizTakePageContent() {
         setError(null);
         console.log("Submitting answers:", selectedAnswers);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
             const response = await fetch(`${apiUrl}/api/v1/quizzes/${quizIdNum}/submit`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},

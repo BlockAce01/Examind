@@ -53,7 +53,7 @@ export default function EditQuizPage() {
         setIsLoadingData(true);
         setFetchError(null);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
             const response = await fetch(`${apiUrl}/api/v1/quizzes/${quizIdNum}`, {
                 headers: { 'Authorization': `Bearer ${token}` },
             });
@@ -119,7 +119,7 @@ export default function EditQuizPage() {
         };
 
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
             const response = await fetch(`${apiUrl}/api/v1/quizzes/${quizIdNum}`, {
                 method: 'PUT',
                 headers: {
@@ -149,7 +149,7 @@ export default function EditQuizPage() {
         const isEditing = !!questionData.QuestionID;
         const method = isEditing ? 'PUT' : 'POST';
         const questionId = questionData.QuestionID;
-        const apiUrlBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        const apiUrlBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
         let url = `${apiUrlBase}/api/v1/quizzes/${quizIdNum}/questions`;
         if (isEditing && questionId) { url += `/${questionId}`; }
 
@@ -189,7 +189,7 @@ export default function EditQuizPage() {
             setQuestionError(null);
             //maybe show that we are deleting something specific if we need to
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
                 const response = await fetch(`${apiUrl}/api/v1/quizzes/${quizIdNum}/questions/${questionIdToDelete}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` },

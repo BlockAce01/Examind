@@ -19,7 +19,7 @@ export default function TeacherQuizzesPage() {
         setIsLoading(true);
         setError(null);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
             const response = await fetch(`${apiUrl}/api/v1/quizzes`, {
                  headers: { 'Authorization': `Bearer ${token}` },
             });
@@ -52,8 +52,8 @@ export default function TeacherQuizzesPage() {
         if (window.confirm(`Are you sure you want to delete the quiz "${Title}"?`)) {
             try {
                 setError(null);
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-                const response = await fetch(`${apiUrl}/api/v1/quizzes/${QuizID}`, { 
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+                const response = await fetch(`${apiUrl}/api/v1/quizzes/${QuizID}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` },
                 });

@@ -19,7 +19,7 @@ export default function AdminUsersPage() {
             setIsLoading(true);
             setError(null);
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
                 const res = await fetch(`${apiUrl}/api/v1/users`, {
                     headers: { 'Authorization': `Bearer ${token}` },
                 });
@@ -38,7 +38,7 @@ export default function AdminUsersPage() {
     const handleDelete = async (userId: number, userName: string) => {
         if (window.confirm(`Are you sure you want to delete the user "${userName}"? This action cannot be undone.`)) {
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
                 const res = await fetch(`${apiUrl}/api/v1/users/${userId}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` },

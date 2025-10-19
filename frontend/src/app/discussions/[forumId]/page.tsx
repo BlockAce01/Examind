@@ -34,7 +34,7 @@ export default function ForumTopicPage() {
             setIsLoadingForum(true);
             setForumError(null);
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
                 const response = await fetch(`${apiUrl}/api/v1/discussions/${forumId}`);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const data = await response.json();
@@ -59,7 +59,7 @@ export default function ForumTopicPage() {
              setIsLoadingComments(true);
              setCommentsError(null);
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
                 const response = await fetch(`${apiUrl}/api/v1/discussions/${forumId}/comments`); 
                  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const data = await response.json();
@@ -91,7 +91,7 @@ export default function ForumTopicPage() {
         setCommentSubmitError(null);
 
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
             const response = await fetch(`${apiUrl}/api/v1/discussions/${forumId}/comments`, { 
                 method: 'POST',
                 headers: {

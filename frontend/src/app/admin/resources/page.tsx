@@ -18,7 +18,7 @@ export default function AdminResourcesPage() {
         setIsLoading(true);
         setError(null);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
             const response = await fetch(`${apiUrl}/api/v1/resources`, {
                  headers: { /* Add Auth header, if required by backend */ },
             });
@@ -49,7 +49,7 @@ export default function AdminResourcesPage() {
         if (window.confirm(`Are you sure you want to delete the resource "${resourceTitle}"?`)) {
             try {
                 setError(null);
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
                 const response = await fetch(`${apiUrl}/api/v1/resources/${resourceId}`, { // Use correct ResourceID
                     method: 'DELETE',
                     headers: {

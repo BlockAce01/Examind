@@ -20,7 +20,7 @@ export default function AdminDiscussionsPage() {
         setIsLoading(true);
         setError(null);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
             const response = await fetch(`${apiUrl}/api/v1/discussions`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -50,7 +50,7 @@ export default function AdminDiscussionsPage() {
         if (window.confirm(`Are you sure you want to delete the forum topic "${Topic}"? Associated posts may be deleted (if CASCADE set).`)) {
             try {
                 setError(null);
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
                 const response = await fetch(`${apiUrl}/api/v1/discussions/${ForumID}`, { //use forumid
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` },

@@ -39,7 +39,7 @@ export default function DiscussionForm({ defaultSubjectId }: DiscussionFormProps
     useEffect(() => {
         const fetchSubjects = async () => {
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
                 const response = await fetch(`${apiUrl}/api/v1/subjects`);
                 if (!response.ok) {
                     throw new Error('Failed to fetch subjects');
@@ -77,7 +77,7 @@ export default function DiscussionForm({ defaultSubjectId }: DiscussionFormProps
             };
 
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
                 const response = await fetch(`${apiUrl}/api/v1/discussions`, {
                     method: 'POST',
                     headers: {
