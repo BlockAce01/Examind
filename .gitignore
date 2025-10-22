@@ -9,3 +9,34 @@ docs/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Environment variables
+.env*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Next.js
+.next/
+out/
+frontend/next-env.d.ts
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+
+# Logs
+logs/
+*.log
