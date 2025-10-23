@@ -1,5 +1,8 @@
 # Examind: Online Learning and Community Platform
 
+[![CI/CD Pipeline](https://github.com/BlockAce01/Examind/actions/workflows/ci-cd.yml/badge.svg?branch=test)](https://github.com/BlockAce01/Examind/actions/workflows/ci-cd.yml)
+[![Playwright Tests](https://github.com/BlockAce01/Examind/actions/workflows/playwright.yml/badge.svg?branch=test)](https://github.com/BlockAce01/Examind/actions/workflows/playwright.yml)
+
 Examind is a full-stack web application designed to provide an interactive and engaging learning experience. It features a comprehensive set of tools for students and teachers, including quizzes, discussion forums, resource sharing, and a gamified leaderboard to encourage participation.
 
 ## Table of Contents
@@ -24,6 +27,15 @@ Examind is a full-stack web application designed to provide an interactive and e
     - [Running Tests](#running-tests)
     - [Test Configuration](#test-configuration)
     - [Writing Tests](#writing-tests)
+  - [CI/CD Pipeline](#cicd-pipeline)
+    - [Workflows](#workflows)
+      - [1. CI/CD Pipeline (`ci-cd.yml`)](#1-cicd-pipeline-ci-cdyml)
+      - [2. Playwright Tests (`playwright.yml`)](#2-playwright-tests-playwrightyml)
+    - [Pipeline Features](#pipeline-features)
+    - [Test Reports](#test-reports)
+    - [Accessing Test Results](#accessing-test-results)
+    - [Running Locally vs CI](#running-locally-vs-ci)
+    - [Local Testing Script](#local-testing-script)
   - [Contributing](#contributing)
   - [License](#license)
 
@@ -227,6 +239,98 @@ Tests follow the Page Object Model pattern for better maintainability. Each test
 - Setup and teardown logic
 - Assertions for expected behavior
 - Error handling for edge cases
+
+## CI/CD Pipeline
+
+Examind uses GitHub Actions for continuous integration and automated testing **on the `test` branch only**, ensuring code quality and preventing regressions.
+
+### Workflows
+
+#### 1. CI/CD Pipeline (`ci-cd.yml`)
+Comprehensive pipeline that runs on every push and pull request to the `test` branch:
+
+- **Quality Checks**: Linting and TypeScript type checking
+- **Build**: Frontend build verification
+- **E2E Tests**: Full Playwright test suite with database setup
+- **Security**: Dependency vulnerability scanning
+
+#### 2. Playwright Tests (`playwright.yml`)
+Dedicated end-to-end testing workflow for the `test` branch:
+
+- PostgreSQL database setup
+- Backend and frontend server startup
+- Complete test execution
+- Test artifact uploads and detailed reporting
+
+### Pipeline Features
+
+- **Database Setup**: Automatic PostgreSQL setup with schema initialization
+- **Service Dependencies**: Backend and frontend servers start automatically
+- **Artifact Management**: Test results and reports are preserved for 30 days
+- **Parallel Jobs**: Quality checks run in parallel with builds
+- **Environment Variables**: Secure handling of secrets and configuration
+- **Status Reporting**: GitHub step summaries with direct links to results
+
+### Test Reports
+
+After each test run on the `test` branch, you can access:
+
+- **GitHub Actions**: Check the Actions tab for workflow runs
+- **Test Results**: Download test artifacts (screenshots, videos, traces)
+- **Playwright Report**: Interactive HTML report with detailed test execution
+- **Status Badges**: Real-time status shown in the README
+- **GitHub Summary**: Quick overview in each workflow run summary
+
+### Accessing Test Results
+
+1. Go to the **Actions** tab in your GitHub repository
+2. Click on the latest workflow run
+3. Scroll down to the **Artifacts** section
+4. Download `test-results` and `playwright-report` archives
+5. Extract and open `playwright-report/index.html` for detailed results
+
+### Running Locally vs CI
+
+The CI pipeline replicates your local development environment:
+
+- Uses the same Node.js version (18)
+- Installs dependencies with `npm ci` for reproducible builds
+- Sets up PostgreSQL with the same schema
+- Runs tests against built frontend and running backend
+- Provides detailed reporting and artifact storage
+
+### Local Testing Script
+
+For easier local testing that mirrors the CI environment, use the provided test setup script:
+
+```bash
+# Setup testing environment (one-time)
+./test-setup.sh setup
+
+# Run tests
+./test-setup.sh test
+
+# Setup and run tests in one command
+./test-setup.sh all
+
+# Run tests in headed mode
+./test-setup.sh test --headed
+
+# Run specific test directory
+./test-setup.sh test tests/1.User*
+
+# Cleanup testing environment
+./test-setup.sh cleanup
+```
+
+The script automatically:
+- Starts a PostgreSQL container
+- Sets up the database schema
+- Creates necessary environment files
+- Installs dependencies and Playwright browsers
+- Builds the frontend
+- Starts backend and frontend servers
+- Runs the test suite
 
 ## Contributing
 
