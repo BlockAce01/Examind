@@ -205,7 +205,7 @@ The `tests/` directory contains comprehensive test suites organized by functiona
 
 3. **Run specific test file:**
    ```bash
-   npx playwright test tests/1.User\ Authentication\ and\ Registration/01-student-registration-valid-data.spec.ts
+   npx playwright test tests/1.User Authentication and Registration/01-student-registration-valid-data.spec.ts
    ```
 
 4. **Run tests with UI mode:**
@@ -317,7 +317,7 @@ For easier local testing that mirrors the CI environment, use the provided test 
 ./test-setup.sh test --headed
 
 # Run specific test directory
-./test-setup.sh test tests/1.User*
+./test-setup.sh test "tests/1.User Authentication and Registration/*"
 
 # Cleanup testing environment
 ./test-setup.sh cleanup
