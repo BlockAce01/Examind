@@ -730,17 +730,18 @@ Examind is a full-stack online learning and community platform designed for A/L 
   - Upvote button shows but does nothing, OR
   - System allows self-upvoting (depends on business logic)
 
-#### 5.7 Teacher - Edit Discussion Topic
+#### 5.7 Admin - Edit Discussion Topic
 **Steps:**
-1. Login as teacher
-2. Navigate to discussion created by this teacher or any discussion
-3. Click "Edit" option
-4. Modify topic or description
-5. Save changes
+1. Login as admin
+2. Navigate to /admin/discussions or admin panel
+3. Find discussion to edit
+4. Click "Edit" option
+5. Modify topic or description
+6. Save changes
 
 **Expected Results:**
 - Edit form appears with current data
-- Teacher/Admin can edit forum details
+- Admin can edit any forum details
 - Changes save to database
 - Updated forum reflects modifications
 

@@ -21,9 +21,9 @@ export class DiscussionsPage extends BasePage {
     this.topicTitleInput = page.getByLabel(/Topic/i);
     this.subjectSelect = page.getByLabel(/Subject/i);
     this.descriptionTextarea = page.getByLabel(/Description/i);
-    this.submitTopicButton = page.getByRole('button', { name: /Submit|Create/i });
+    this.submitTopicButton = page.getByRole('button', { name: /Submit|Create|Save Topic/i });
     this.backToForumsLink = page.getByRole('link', { name: /Back to All Forums/i });
-    this.commentTextarea = page.getByPlaceholder(/Add your contribution/i);
+    this.commentTextarea = page.getByPlaceholder(/Type your question or reply here/i);
     this.postReplyButton = page.getByRole('button', { name: /Post Reply/i });
   }
 
@@ -76,13 +76,14 @@ export class DiscussionsPage extends BasePage {
   }
 
   async upvoteComment(commentText: string) {
-    const comment = this.page.locator('[data-testid="comment"]').filter({ hasText: commentText });
-    await comment.getByRole('button', { name: /upvote|👍/i }).click();
+    // Find comment by text and click the upvote button (which shows the count)
+    const comment = this.page.locator('main').locator('p').filter({ hasText: commentText }).locator('..').locator('..');
+    await comment.locator('button').filter({ hasText: /\d+/ }).click();
   }
 
   async verifyUpvoteCount(commentText: string, expectedCount: number) {
-    const comment = this.page.locator('[data-testid="comment"]').filter({ hasText: commentText });
-    await expect(comment.getByText(expectedCount.toString())).toBeVisible();
+    const comment = this.page.locator('main').locator('p').filter({ hasText: commentText }).locator('..').locator('..');
+    await expect(comment.locator('button').filter({ hasText: expectedCount.toString() })).toBeVisible();
   }
 
   async verifyCommentTextarea() {
@@ -102,17 +103,18 @@ export class DiscussionsPage extends BasePage {
   }
 
   async getDiscussionCount(): Promise<number> {
-    const discussions = this.page.locator('[data-testid="discussion-item"]');
+    // Count discussion links - they appear as links in the main content area
+    const discussions = this.page.locator('main a[href*="/discussions/"]');
     return await discussions.count();
   }
 
   async editDiscussion(topic: string) {
-    const discussion = this.page.locator('[data-testid="discussion-item"]').filter({ hasText: topic });
+    const discussion = this.page.locator('main a[href*="/discussions/"]').filter({ hasText: topic });
     await discussion.getByRole('button', { name: /Edit/i }).click();
   }
 
   async deleteDiscussion(topic: string) {
-    const discussion = this.page.locator('[data-testid="discussion-item"]').filter({ hasText: topic });
+    const discussion = this.page.locator('main a[href*="/discussions/"]').filter({ hasText: topic });
     await discussion.getByRole('button', { name: /Delete/i }).click();
   }
 
@@ -135,5 +137,15 @@ export class DiscussionsPage extends BasePage {
 
   async verifyEmptyState() {
     await expect(this.page.getByText(/No discussions found/i)).toBeVisible();
+  }
+
+  async waitForDiscussionsLoaded() {
+    try {
+      // Wait for loading spinner to disappear with a shorter timeout
+      await this.page.locator('[aria-label="Loading..."]').waitFor({ state: 'detached', timeout: 5000 });
+    } catch (error) {
+      // If loading doesn't disappear, continue anyway - the page might still work
+      console.log('Loading spinner did not disappear, continuing...');
+    }
   }
 }
