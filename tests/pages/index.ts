@@ -1,0 +1,11 @@
+export { BasePage } from './BasePage';
+export { RegisterPage } from './RegisterPage';
+export { LoginPage } from './LoginPage';
+export { DashboardPage } from './DashboardPage';
+export { ProfilePage } from './ProfilePage';
+export { LeaderboardPage } from './LeaderboardPage';
+export { QuizzesPage } from './QuizzesPage';
+export { QuizTakingPage } from './QuizTakingPage';
+export { QuizResultsPage } from './QuizResultsPage';
+export { ResourcesPage } from './ResourcesPage';
+export { DiscussionsPage } from './DiscussionsPage';

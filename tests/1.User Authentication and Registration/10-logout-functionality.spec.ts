@@ -2,34 +2,33 @@
 // seed: tests/seed.spec.ts
 
 import { test, expect } from '@playwright/test';
+import { RegisterPage, LoginPage, DashboardPage } from '../pages';
 
 test.describe('User Authentication and Registration', () => {
   test('1.10 Logout Functionality', async ({ page }) => {
+    const registerPage = new RegisterPage(page);
+    const loginPage = new LoginPage(page);
+    const dashboardPage = new DashboardPage(page);
+
     // Create a unique user for logout testing
-    const uniqueEmail = `logout.${Date.now()}@example.com`;
+    const uniqueEmail = registerPage.generateUniqueEmail('logout');
 
     // Register first
-    await page.goto('http://localhost:3000/register');
-    await page.getByRole('textbox', { name: 'Full Name' }).fill('Logout Test User');
-    await page.getByRole('textbox', { name: 'Email Address' }).fill(uniqueEmail);
-    await page.getByRole('textbox', { name: 'Password', exact: true }).fill('SecurePass123!');
-    await page.getByRole('textbox', { name: 'Confirm Password' }).fill('SecurePass123!');
-    await page.getByLabel('Register As').selectOption(['Student']);
-    await page.getByLabel('Subject').selectOption(['Physics']);
-    await page.getByLabel('Subject 2').selectOption(['Chemistry']);
-    await page.getByLabel('Subject 3').selectOption(['Biology']);
-    await page.getByRole('button', { name: 'Register' }).click();
+    await registerPage.navigateDirectly();
+    await registerPage.registerStudent(
+      'Logout Test User',
+      uniqueEmail,
+      'SecurePass123!',
+      ['Physics', 'Chemistry', 'Biology']
+    );
 
     // 1. Login with valid credentials
-    await page.goto('http://localhost:3000/login');
-    await page.getByRole('textbox', { name: 'Email' }).fill(uniqueEmail);
-    await page.getByRole('textbox', { name: 'Password' }).fill('SecurePass123!');
-    await page.getByRole('button', { name: 'Login' }).click();
+    await loginPage.navigateToLogin();
+    await loginPage.login(uniqueEmail, 'SecurePass123!');
 
     // 2. Navigate to dashboard (automatic redirect after login)
-    // Check for dashboard indicators
     try {
-      await page.waitForURL(/.*dashboard/, { timeout: 3000 });
+      await dashboardPage.waitForURL(/.*dashboard/, 3000);
     } catch (e) {
       // Continue if URL didn't change
     }
@@ -41,17 +40,9 @@ test.describe('User Authentication and Registration', () => {
       test.skip();
     }
     
-    await logoutButton.click();
+    await dashboardPage.clickLogout();
 
     // Expected Results: User is logged out and redirected to /login page
-    // Check for login indicators
-    try {
-      await page.waitForURL(/.*login/, { timeout: 3000 });
-    } catch (e) {
-      // Continue
-    }
-
-    // Verify URL is /login or at least not dashboard
     const currentUrl = page.url();
     if (currentUrl.includes('dashboard') || currentUrl.includes('profile')) {
       // User wasn't logged out
@@ -59,7 +50,7 @@ test.describe('User Authentication and Registration', () => {
     }
     
     // Verify we're on login page
-    await expect(page).toHaveURL(/.*login/);
+    await dashboardPage.verifyLoggedOut();
     
     // Close browser
     await page.close();

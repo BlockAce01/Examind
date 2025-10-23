@@ -2,20 +2,15 @@
 // seed: tests/seed.spec.ts
 
 import { test, expect } from '@playwright/test';
+import { LoginPage } from '../pages';
 
 test.describe('User Authentication and Registration', () => {
   test('1.8 Invalid Login - Unregistered Email', async ({ page }) => {
-    // 1. Navigate to login page
-    await page.goto('http://localhost:3000/login');
+    const loginPage = new LoginPage(page);
 
-    // 2. Fill in "Email Address" with "nonexistent@example.com"
-    await page.getByRole('textbox', { name: 'Email Address' }).fill('nonexistent@example.com');
-
-    // 3. Fill in "Password" with any password
-    await page.getByRole('textbox', { name: 'Password' }).fill('AnyPassword123!');
-
-    // 4. Click "Login" button
-    await page.getByRole('button', { name: 'Login' }).click();
+    // 1. Navigate to login page and attempt login with unregistered email
+    await loginPage.navigateToLogin();
+    await loginPage.login('nonexistent@example.com', 'AnyPassword123!');
 
     // Expected Results: Login fails and error message appears
     const errorMessages = [
@@ -39,7 +34,7 @@ test.describe('User Authentication and Registration', () => {
     expect(errorFound || await page.url().includes('login')).toBeTruthy();
     
     // Verify user remains on login page
-    await expect(page).toHaveURL(/.*login/);
+    await loginPage.verifyStillOnLoginPage();
     
     // Close browser
     await page.close();

@@ -2,22 +2,25 @@
 // seed: tests/seed.spec.ts
 
 import { test, expect } from '@playwright/test';
+import { RegisterPage } from '../pages';
 
 test.describe('User Authentication and Registration', () => {
   test('1.2 Student Registration - Missing Required Fields', async ({ page, browserName }) => {
+    const registerPage = new RegisterPage(page);
+
     // 1. Navigate to registration page (http://localhost:3000/register)
-    await page.goto('http://localhost:3000/register');
+    await registerPage.navigateDirectly();
 
     // 2. Fill in only "Full Name" with "Jane Smith"
-    await page.getByRole('textbox', { name: 'Full Name' }).fill('Jane Smith');
+    await registerPage.fillFullName('Jane Smith');
 
     // 3. Fill in only "Email Address" with "jane@example.com"
-    await page.getByRole('textbox', { name: 'Email Address' }).fill('jane@example.com');
+    await registerPage.fillEmail('jane@example.com');
 
     // 4. Leave Password fields empty (no action needed)
 
     // 5. Click "Register" button
-    await page.getByRole('button', { name: 'Register' }).click();
+    await registerPage.clickRegister();
 
     // Expected Results: Form validation prevents submission and user remains on registration page
     await expect(page.getByText('Create Your Account')).toBeVisible();
@@ -27,8 +30,8 @@ test.describe('User Authentication and Registration', () => {
     
     // Verify entered data is retained (webkit clears form values differently)
     if (browserName !== 'webkit') {
-      await expect(page.getByRole('textbox', { name: 'Full Name' })).toHaveValue('Jane Smith');
-      await expect(page.getByRole('textbox', { name: 'Email Address' })).toHaveValue('jane@example.com');
+      await expect(registerPage.fullNameInput).toHaveValue('Jane Smith');
+      await expect(registerPage.emailInput).toHaveValue('jane@example.com');
     }
     
     // Close browser
