@@ -43,14 +43,19 @@ export class LeaderboardPage extends BasePage {
   }
 
   async getUserRank(userName: string): Promise<number | null> {
-    const entries = this.page.locator('[data-testid^="leaderboard-entry-"]');
-    const count = await entries.count();
+    // Look for list items containing the user name
+    const listItems = this.page.locator('li');
+    const count = await listItems.count();
     
     for (let i = 0; i < count; i++) {
-      const entry = entries.nth(i);
-      const text = await entry.textContent();
+      const item = listItems.nth(i);
+      const text = await item.textContent();
       if (text?.includes(userName)) {
-        return i + 1;
+        // Extract rank from text like "4. Test Student"
+        const rankMatch = text.match(/^(\d+)\./);
+        if (rankMatch) {
+          return parseInt(rankMatch[1]);
+        }
       }
     }
     return null;
