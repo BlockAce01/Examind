@@ -32,27 +32,36 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-        cache: 'npm'
 
     - name: Install root dependencies
-      run: npm ci
+      run: |
+        if [ -f package-lock.json ]; then
+          npm ci
+        else
+          npm install
+        fi
 
     - name: Install backend dependencies
+      working-directory: backend
       run: |
-        cd backend
-        npm ci
+        if [ -f package-lock.json ]; then
+          npm ci
+        else
+          npm install
+        fi
 
     - name: Install frontend dependencies
+      working-directory: frontend
       run: |
-        cd frontend
-        npm ci
+        if [ -f package-lock.json ]; then
+          npm ci
+        else
+          npm install
+        fi
 
     - name: Setup database
       run: |
-        cd backend/config
-        psql -h localhost -U postgres -d examind_test -f examindDB-schema.sql
-      env:
-        PGPASSWORD: postgres
+        PGPASSWORD=postgres psql -h localhost -U postgres -d examind_test -f backend/config/examindDB-schema.sql
 
     - name: Create backend environment file
       run: |
@@ -71,28 +80,51 @@ jobs:
       run: |
         cd frontend
         cat > .env.local << EOF
-        NEXT_PUBLIC_API_URL=http://localhost:3000/api
+        NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
         EOF
 
     - name: Build frontend
-      run: |
-        cd frontend
-        npm run build
+      working-directory: frontend
+      run: npm run build
 
     - name: Start backend server
+      working-directory: backend
       run: |
-        cd backend
-        npm start &
-        sleep 10
-
+        nohup npm start > backend.log 2>&1 &
+        echo $! > backend.pid
+        
+    - name: Wait for backend
+      run: |
+        echo "Waiting for backend to start..."
+        for i in {1..30}; do
+          if curl -f http://localhost:8080/api/health 2>/dev/null; then
+            echo "Backend is ready!"
+            break
+          fi
+          echo "Attempt $i: Backend not ready yet..."
+          sleep 2
+        done
+        
     - name: Start frontend server
+      working-directory: frontend
       run: |
-        cd frontend
-        npm start &
-        sleep 10
+        nohup npm start > frontend.log 2>&1 &
+        echo $! > frontend.pid
+        
+    - name: Wait for frontend
+      run: |
+        echo "Waiting for frontend to start..."
+        for i in {1..30}; do
+          if curl -f http://localhost:3000 2>/dev/null; then
+            echo "Frontend is ready!"
+            break
+          fi
+          echo "Attempt $i: Frontend not ready yet..."
+          sleep 2
+        done
 
     - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
+      run: npx playwright install --with-deps chromium
 
     - name: Run Playwright tests
       run: npx playwright test
@@ -114,6 +146,25 @@ jobs:
         name: playwright-report
         path: playwright-report/
         retention-days: 30
+
+    - name: Display logs on failure
+      if: ${{ failure() }}
+      run: |
+        echo "=== Backend Logs ==="
+        cat backend/backend.log || echo "No backend logs found"
+        echo ""
+        echo "=== Frontend Logs ==="
+        cat frontend/frontend.log || echo "No frontend logs found"
+        
+    - name: Cleanup processes
+      if: ${{ always() }}
+      run: |
+        if [ -f backend/backend.pid ]; then
+          kill $(cat backend/backend.pid) || true
+        fi
+        if [ -f frontend/frontend.pid ]; then
+          kill $(cat frontend/frontend.pid) || true
+        fi
 
     - name: Generate test summary
       if: ${{ always() }}

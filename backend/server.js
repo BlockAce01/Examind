@@ -45,6 +45,11 @@ app.get('/', (req, res) => {
   res.send('Examind Backend API is running!');
 });
 
+// Health check endpoint for CI/CD
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'Backend is healthy' });
+});
+
 //   error handling middleware
 //catch-all for 404 Not Found errors
 app.use((req, res, next) => {
