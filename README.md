@@ -4,17 +4,28 @@ Examind is a full-stack web application designed to provide an interactive and e
 
 ## Table of Contents
 
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Configuration](#configuration)
-  - [Running the Application](#running-the-application)
-- [API Endpoints](#api-endpoints)
-- [Project Structure](#project-structure)
-- [Contributing](#contributing)
-- [License](#license)
+- [Examind: Online Learning and Community Platform](#examind-online-learning-and-community-platform)
+  - [Table of Contents](#table-of-contents)
+  - [Features](#features)
+  - [Tech Stack](#tech-stack)
+    - [Frontend](#frontend)
+    - [Backend](#backend)
+  - [Getting Started](#getting-started)
+    - [Prerequisites](#prerequisites)
+    - [Installation](#installation)
+    - [Configuration](#configuration)
+    - [Running the Application](#running-the-application)
+  - [API Endpoints](#api-endpoints)
+  - [Project Structure](#project-structure)
+    - [Frontend](#frontend-1)
+    - [Backend](#backend-1)
+  - [Testing](#testing)
+    - [Test Structure](#test-structure)
+    - [Running Tests](#running-tests)
+    - [Test Configuration](#test-configuration)
+    - [Writing Tests](#writing-tests)
+  - [Contributing](#contributing)
+  - [License](#license)
 
 ## Features
 
@@ -148,6 +159,74 @@ The `backend` directory contains the Node.js/Express server, with the following 
 -   `controllers`: Request handlers and business logic
 -   `middleware`: Express middleware functions
 -   `routes`: API route definitions
+
+## Testing
+
+Examind uses [Playwright](https://playwright.dev/) for end-to-end testing to ensure the application works correctly from a user's perspective.
+
+### Test Structure
+
+The `tests/` directory contains comprehensive test suites organized by functionality:
+
+- **1.User Authentication and Registration**: Login, registration, session management
+- **2.Dashboard and User Profile**: User dashboard, profile management, leaderboard
+- **3.Quiz Management and Taking**: Quiz creation, taking quizzes, navigation
+- **4.Resource Management**: Resource upload, download, filtering
+- **5.Discussion Forums**: Discussion creation, posting, moderation
+- **6.Gamification - Points and Badges**: Badge earning, point system, achievements
+- **7.Teacher Dashboard**: Teacher-specific features and content management
+- **8.Admin Dashboard**: Administrative functions and user management
+- **9.Subject Management**: Subject filtering across different features
+- **10.Edge Cases and Error Handling**: Error scenarios, invalid inputs, security tests
+
+### Running Tests
+
+1. **Install Playwright browsers:**
+   ```bash
+   npx playwright install
+   ```
+
+2. **Run all tests:**
+   ```bash
+   npx playwright test
+   ```
+
+3. **Run specific test file:**
+   ```bash
+   npx playwright test tests/1.User\ Authentication\ and\ Registration/01-student-registration-valid-data.spec.ts
+   ```
+
+4. **Run tests with UI mode:**
+   ```bash
+   npx playwright test --ui
+   ```
+
+5. **Run tests in headed mode (visible browser):**
+   ```bash
+   npx playwright test --headed
+   ```
+
+6. **Generate test report:**
+   ```bash
+   npx playwright show-report
+   ```
+
+### Test Configuration
+
+- **Framework**: Playwright with TypeScript
+- **Browser**: Chromium (default), with cross-browser support available
+- **Page Objects**: Reusable page classes in `tests/pages/` for maintainable tests
+- **Test Data**: Seed data in `tests/seed.spec.ts` for consistent test environments
+- **Parallel Execution**: Tests run in parallel for faster execution
+
+### Writing Tests
+
+Tests follow the Page Object Model pattern for better maintainability. Each test file includes:
+
+- Clear test descriptions
+- Setup and teardown logic
+- Assertions for expected behavior
+- Error handling for edge cases
 
 ## Contributing
 
