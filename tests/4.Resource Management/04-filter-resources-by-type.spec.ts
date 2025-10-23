@@ -2,33 +2,27 @@
 // seed: tests/seed.spec.ts
 
 import { test, expect } from '@playwright/test';
+import { RegisterPage, LoginPage, ResourcesPage } from '../pages';
 
 test.describe('Resource Management', () => {
   test('4.4 Filter Resources by Type', async ({ page }) => {
     const uniqueEmail = `filterresourcetype.${Date.now()}@example.com`;
+    const registerPage = new RegisterPage(page);
+    const loginPage = new LoginPage(page);
+    const resourcesPage = new ResourcesPage(page);
 
     // Register and login
-    await page.goto('http://localhost:3000/register');
-    await page.getByRole('textbox', { name: 'Full Name' }).fill('Filter Resource Type');
-    await page.getByRole('textbox', { name: 'Email Address' }).fill(uniqueEmail);
-    await page.getByRole('textbox', { name: 'Password', exact: true }).fill('SecurePass123!');
-    await page.getByRole('textbox', { name: 'Confirm Password' }).fill('SecurePass123!');
-    await page.getByLabel('Register As').selectOption(['Student']);
-    await page.getByLabel('Subject').selectOption(['Physics']);
-    await page.getByLabel('Subject 2').selectOption(['ICT']);
-    await page.getByLabel('Subject 3').selectOption(['Chemistry']);
-    await page.getByRole('button', { name: 'Register' }).click();
+    await registerPage.navigateToRegister();
+    await registerPage.registerStudent('Filter Resource Type', uniqueEmail, 'SecurePass123!', ['Physics', 'ICT', 'Chemistry']);
 
-    await page.goto('http://localhost:3000/login');
-    await page.getByRole('textbox', { name: 'Email' }).fill(uniqueEmail);
-    await page.getByRole('textbox', { name: 'Password' }).fill('SecurePass123!');
-    await page.getByRole('button', { name: 'Login' }).click();
+    await loginPage.navigateToLogin();
+    await loginPage.login(uniqueEmail, 'SecurePass123!');
 
     // 1. Navigate to /resources
-    await page.goto('http://localhost:3000/resources');
+    await resourcesPage.navigateToResources();
 
     // 2. Select "Notes" from type filter
-    await page.getByLabel(/Type/i).selectOption('Notes');
+    await resourcesPage.filterByType('Notes');
 
     // 3. View results
     await page.waitForTimeout(500);
@@ -44,7 +38,7 @@ test.describe('Resource Management', () => {
     await expect(page.locator('[data-testid="resource-card"]:has-text("Other")')).toHaveCount(0);
 
     // Expected Results: Type filter works independently or combined with subject filter
-    await page.getByLabel(/Subject/i).selectOption('ICT');
+    await resourcesPage.filterBySubject('ICT');
     await page.waitForTimeout(500);
     
     const combinedFilter = page.locator('[data-testid="resource-card"]:has-text("ICT"):has-text("Notes")');

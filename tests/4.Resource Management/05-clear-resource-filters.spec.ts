@@ -2,57 +2,51 @@
 // seed: tests/seed.spec.ts
 
 import { test, expect } from '@playwright/test';
+import { RegisterPage, LoginPage, ResourcesPage } from '../pages';
 
 test.describe('Resource Management', () => {
   test('4.5 Clear Resource Filters', async ({ page }) => {
     const uniqueEmail = `clearresourcefilters.${Date.now()}@example.com`;
+    const registerPage = new RegisterPage(page);
+    const loginPage = new LoginPage(page);
+    const resourcesPage = new ResourcesPage(page);
 
     // Register and login
-    await page.goto('http://localhost:3000/register');
-    await page.getByRole('textbox', { name: 'Full Name' }).fill('Clear Resource Filters');
-    await page.getByRole('textbox', { name: 'Email Address' }).fill(uniqueEmail);
-    await page.getByRole('textbox', { name: 'Password', exact: true }).fill('SecurePass123!');
-    await page.getByRole('textbox', { name: 'Confirm Password' }).fill('SecurePass123!');
-    await page.getByLabel('Register As').selectOption(['Student']);
-    await page.getByLabel('Subject').selectOption(['ICT']);
-    await page.getByLabel('Subject 2').selectOption(['Physics']);
-    await page.getByLabel('Subject 3').selectOption(['Chemistry']);
-    await page.getByRole('button', { name: 'Register' }).click();
+    await registerPage.navigateToRegister();
+    await registerPage.registerStudent('Clear Resource Filters', uniqueEmail, 'SecurePass123!', ['ICT', 'Physics', 'Chemistry']);
 
-    await page.goto('http://localhost:3000/login');
-    await page.getByRole('textbox', { name: 'Email' }).fill(uniqueEmail);
-    await page.getByRole('textbox', { name: 'Password' }).fill('SecurePass123!');
-    await page.getByRole('button', { name: 'Login' }).click();
+    await loginPage.navigateToLogin();
+    await loginPage.login(uniqueEmail, 'SecurePass123!');
 
-    await page.goto('http://localhost:3000/resources');
+    await resourcesPage.navigateToResources();
 
-    const initialCount = await page.locator('[data-testid="resource-card"]').count();
+    const initialCount = await resourcesPage.getResourceCardCount();
 
     // 1. Apply subject filter "ICT"
-    await page.getByLabel(/Subject/i).selectOption('ICT');
+    await resourcesPage.filterBySubject('ICT');
     await page.waitForTimeout(500);
 
     // 2. Apply type filter "Past Paper"
-    await page.getByLabel(/Type/i).selectOption('Past Paper');
+    await resourcesPage.filterByType('Past Paper');
     await page.waitForTimeout(500);
 
     // 3. Type "teacher" in search
-    await page.getByPlaceholder(/Search by title or description/i).fill('teacher');
+    await resourcesPage.searchByTitle('teacher');
     await page.waitForTimeout(500);
 
     // 4. Click "Clear All" button
-    await page.getByRole('button', { name: /Clear All/i }).click();
+    await resourcesPage.clearFilters();
 
     // Expected Results: All filters reset
     await page.waitForTimeout(500);
-    const clearedCount = await page.locator('[data-testid="resource-card"]').count();
+    const clearedCount = await resourcesPage.getResourceCardCount();
     expect(clearedCount).toBeGreaterThanOrEqual(0);
 
     // Expected Results: Search box cleared
     await expect(page.getByPlaceholder(/Search by title or description/i)).toHaveValue('');
 
     // Expected Results: All resources displayed
-    const finalCount = await page.locator('[data-testid="resource-card"]').count();
+    const finalCount = await resourcesPage.getResourceCardCount();
     expect(finalCount).toBeGreaterThanOrEqual(clearedCount);
 
     // Expected Results: Filter dropdowns return to "All" options

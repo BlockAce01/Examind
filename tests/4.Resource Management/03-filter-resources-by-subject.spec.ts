@@ -2,33 +2,27 @@
 // seed: tests/seed.spec.ts
 
 import { test, expect } from '@playwright/test';
+import { RegisterPage, LoginPage, ResourcesPage } from '../pages';
 
 test.describe('Resource Management', () => {
   test('4.3 Filter Resources by Subject', async ({ page }) => {
     const uniqueEmail = `filterresourcesubject.${Date.now()}@example.com`;
+    const registerPage = new RegisterPage(page);
+    const loginPage = new LoginPage(page);
+    const resourcesPage = new ResourcesPage(page);
 
     // Register and login
-    await page.goto('http://localhost:3000/register');
-    await page.getByRole('textbox', { name: 'Full Name' }).fill('Filter Resource Subject');
-    await page.getByRole('textbox', { name: 'Email Address' }).fill(uniqueEmail);
-    await page.getByRole('textbox', { name: 'Password', exact: true }).fill('SecurePass123!');
-    await page.getByRole('textbox', { name: 'Confirm Password' }).fill('SecurePass123!');
-    await page.getByLabel('Register As').selectOption(['Student']);
-    await page.getByLabel('Subject').selectOption(['Physics']);
-    await page.getByLabel('Subject 2').selectOption(['ICT']);
-    await page.getByLabel('Subject 3').selectOption(['Chemistry']);
-    await page.getByRole('button', { name: 'Register' }).click();
+    await registerPage.navigateToRegister();
+    await registerPage.registerStudent('Filter Resource Subject', uniqueEmail, 'SecurePass123!', ['Physics', 'ICT', 'Chemistry']);
 
-    await page.goto('http://localhost:3000/login');
-    await page.getByRole('textbox', { name: 'Email' }).fill(uniqueEmail);
-    await page.getByRole('textbox', { name: 'Password' }).fill('SecurePass123!');
-    await page.getByRole('button', { name: 'Login' }).click();
+    await loginPage.navigateToLogin();
+    await loginPage.login(uniqueEmail, 'SecurePass123!');
 
     // 1. Navigate to /resources
-    await page.goto('http://localhost:3000/resources');
+    await resourcesPage.navigateToResources();
 
     // 2. Select "Physics" from subject filter
-    await page.getByLabel(/Subject/i).selectOption('Physics');
+    await resourcesPage.filterBySubject('Physics');
 
     // 3. View results
     await page.waitForTimeout(500);
@@ -43,7 +37,7 @@ test.describe('Resource Management', () => {
     await expect(page.locator('[data-testid="resource-card"]:has-text("ICT")')).toHaveCount(0);
 
     // Expected Results: Can combine with type filter
-    await page.getByLabel(/Type/i).selectOption('Past Paper');
+    await resourcesPage.filterByType('Past Paper');
     await page.waitForTimeout(500);
     
     const combinedFilter = page.locator('[data-testid="resource-card"]:has-text("Physics"):has-text("Past Paper")');
@@ -52,6 +46,6 @@ test.describe('Resource Management', () => {
     }
 
     // Expected Results: "Clear All" button becomes enabled
-    await expect(page.getByRole('button', { name: /Clear All/i })).toBeEnabled();
+    await resourcesPage.verifyClearAllEnabled();
   });
 });

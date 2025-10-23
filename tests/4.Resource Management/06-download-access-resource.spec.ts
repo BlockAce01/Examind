@@ -2,37 +2,31 @@
 // seed: tests/seed.spec.ts
 
 import { test, expect } from '@playwright/test';
+import { RegisterPage, LoginPage, ResourcesPage } from '../pages';
 
 test.describe('Resource Management', () => {
   test('4.6 Download/Access Resource', async ({ page }) => {
     const uniqueEmail = `accessresource.${Date.now()}@example.com`;
+    const registerPage = new RegisterPage(page);
+    const loginPage = new LoginPage(page);
+    const resourcesPage = new ResourcesPage(page);
 
     // Register and login
-    await page.goto('http://localhost:3000/register');
-    await page.getByRole('textbox', { name: 'Full Name' }).fill('Access Resource User');
-    await page.getByRole('textbox', { name: 'Email Address' }).fill(uniqueEmail);
-    await page.getByRole('textbox', { name: 'Password', exact: true }).fill('SecurePass123!');
-    await page.getByRole('textbox', { name: 'Confirm Password' }).fill('SecurePass123!');
-    await page.getByLabel('Register As').selectOption(['Student']);
-    await page.getByLabel('Subject').selectOption(['Physics']);
-    await page.getByLabel('Subject 2').selectOption(['Chemistry']);
-    await page.getByLabel('Subject 3').selectOption(['ICT']);
-    await page.getByRole('button', { name: 'Register' }).click();
+    await registerPage.navigateToRegister();
+    await registerPage.registerStudent('Access Resource User', uniqueEmail, 'SecurePass123!', ['Physics', 'Chemistry', 'ICT']);
 
-    await page.goto('http://localhost:3000/login');
-    await page.getByRole('textbox', { name: 'Email' }).fill(uniqueEmail);
-    await page.getByRole('textbox', { name: 'Password' }).fill('SecurePass123!');
-    await page.getByRole('button', { name: 'Login' }).click();
+    await loginPage.navigateToLogin();
+    await loginPage.login(uniqueEmail, 'SecurePass123!');
 
     // 1. Navigate to /resources
-    await page.goto('http://localhost:3000/resources');
+    await resourcesPage.navigateToResources();
 
     // 2. Find a resource (e.g., "past paper")
-    const resourceCards = page.locator('[data-testid="resource-card"]');
+    const count = await resourcesPage.getResourceCardCount();
     
-    if (await resourceCards.count() > 0) {
+    if (count > 0) {
       // 3. Click on resource title link
-      const resourceLink = resourceCards.first().getByRole('link').first();
+      const resourceLink = page.locator('[data-testid="resource-card"]').first().getByRole('link').first();
       await expect(resourceLink).toBeVisible();
 
       // 4. Observe download/access behavior

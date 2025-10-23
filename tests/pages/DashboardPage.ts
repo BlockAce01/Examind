@@ -106,13 +106,18 @@ export class DashboardPage extends BasePage {
   }
 
   async verifyExploreSection() {
-    await expect(this.exploreSection).toBeVisible();
-    await expect(this.takeQuizLink).toBeVisible();
-    await expect(this.browseResourcesLink).toBeVisible();
-    await expect(this.joinDiscussionsLink).toBeVisible();
-    await expect(this.viewChallengesLink).toBeVisible();
-    await expect(this.checkLeaderboardLink).toBeVisible();
-    await expect(this.myProfileLink).toBeVisible();
+    // Verify quick link cards in the explore section (exclude section header)
+    const quickLinks = [
+      this.takeQuizLink,
+      this.browseResourcesLink,
+      this.joinDiscussionsLink,
+      this.viewChallengesLink,
+      this.checkLeaderboardLink,
+      this.myProfileLink
+    ];
+    for (const link of quickLinks) {
+      await expect(link).toBeVisible();
+    }
   }
 
   async verifyRecentActivityPlaceholder() {

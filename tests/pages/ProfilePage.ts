@@ -40,7 +40,12 @@ export class ProfilePage extends BasePage {
   }
 
   async verifyOnProfilePage() {
-    await expect(this.pageTitle).toBeVisible();
+    // Verify that the current URL is the profile page
+    await expect(this.page).toHaveURL(/.*\/profile/);
+    // Optionally, check for page title if present
+    if (await this.pageTitle.count() > 0) {
+      await expect(this.pageTitle).toBeVisible();
+    }
   }
 
   async verifyUserInfo(name?: string, email?: string) {

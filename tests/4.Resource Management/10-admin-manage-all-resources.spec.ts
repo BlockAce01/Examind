@@ -2,21 +2,22 @@
 // seed: tests/seed.spec.ts
 
 import { test, expect } from '@playwright/test';
+import { LoginPage } from '../pages';
 
 test.describe('Resource Management', () => {
   test('4.10 Admin - Manage All Resources', async ({ page }) => {
+    const loginPage = new LoginPage(page);
 
     // Use fixed admin account
     const adminEmail = 'pakaya@email.com';
     const adminPassword = 'asdasd';
 
     // 1. Login as admin
-    await page.goto('http://localhost:3000/login');
-    await page.getByRole('textbox', { name: 'Email' }).fill(adminEmail);
-    await page.getByRole('textbox', { name: 'Password' }).fill(adminPassword);
-    await page.getByRole('button', { name: 'Login' }).click();
+    await loginPage.navigateToLogin();
+    await loginPage.login(adminEmail, adminPassword);
 
     await page.waitForURL('**/admin', { timeout: 10000 });
+    
     // 2. Navigate to /admin or admin resources view
     await page.goto('http://localhost:3000/admin/resources');
 

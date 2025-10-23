@@ -2,27 +2,21 @@
 // seed: tests/seed.spec.ts
 
 import { test, expect } from '@playwright/test';
+import { RegisterPage, LoginPage } from '../pages';
 
 test.describe('Resource Management', () => {
   test('4.9 Teacher - Delete Resource', async ({ page }) => {
     const uniqueEmail = `teacherdelresource.${Date.now()}@example.com`;
+    const registerPage = new RegisterPage(page);
+    const loginPage = new LoginPage(page);
 
     // Register as teacher
-    await page.goto('http://localhost:3000/register');
-    await page.getByRole('textbox', { name: 'Full Name' }).fill('Teacher Delete Resource');
-    await page.getByRole('textbox', { name: 'Email Address' }).fill(uniqueEmail);
-    await page.getByRole('textbox', { name: 'Password', exact: true }).fill('SecurePass123!');
-    await page.getByRole('textbox', { name: 'Confirm Password' }).fill('SecurePass123!');
-    await page.getByLabel('Register As').selectOption(['Teacher']);
-    await page.getByLabel(/Subject/i).selectOption('Physics');
-    await page.getByRole('button', { name: 'Register' }).click();
+    await registerPage.navigateToRegister();
+    await registerPage.registerTeacher('Teacher Delete Resource', uniqueEmail, 'SecurePass123!', 'Physics');
 
     // 1. Login as teacher
-    await page.goto('http://localhost:3000/login');
-    await page.getByRole('textbox', { name: 'Email' }).fill(uniqueEmail);
-    await page.getByRole('textbox', { name: 'Password' }).fill('SecurePass123!');
-    await page.getByRole('button', { name: 'Login' }).click();
-
+    await loginPage.navigateToLogin();
+    await loginPage.login(uniqueEmail, 'SecurePass123!');
     await page.waitForTimeout(1000);
 
     // 2. Find resource created by this teacher
