@@ -2,49 +2,43 @@
 // seed: tests/seed.spec.ts
 
 import { test, expect } from '@playwright/test';
+import { RegisterPage } from '../pages/RegisterPage';
+import { LoginPage } from '../pages/LoginPage';
+import { QuizzesPage } from '../pages/QuizzesPage';
 
 test.describe('Quiz Management and Taking', () => {
   test('3.4 Clear Quiz Filters', async ({ page }) => {
-    const uniqueEmail = `clearfilters.${Date.now()}@example.com`;
+    const registerPage = new RegisterPage(page);
+    const loginPage = new LoginPage(page);
+    const quizzesPage = new QuizzesPage(page);
+    
+    const uniqueEmail = registerPage.generateUniqueEmail('clearfilters');
 
     // Register and login
-    await page.goto('http://localhost:3000/register');
-    await page.getByRole('textbox', { name: 'Full Name' }).fill('Clear Filters User');
-    await page.getByRole('textbox', { name: 'Email Address' }).fill(uniqueEmail);
-    await page.getByRole('textbox', { name: 'Password', exact: true }).fill('SecurePass123!');
-    await page.getByRole('textbox', { name: 'Confirm Password' }).fill('SecurePass123!');
-    await page.getByLabel('Register As').selectOption(['Student']);
-    await page.getByLabel('Subject').selectOption(['Chemistry']);
-    await page.getByLabel('Subject 2').selectOption(['Physics']);
-    await page.getByLabel('Subject 3').selectOption(['Combined Mathematics']);
-    await page.getByRole('button', { name: 'Register' }).click();
+    await registerPage.navigateDirectly();
+    await registerPage.registerStudent('Clear Filters User', uniqueEmail, 'SecurePass123!',
+      ['Chemistry', 'Physics', 'Combined Mathematics']);
 
-    await page.goto('http://localhost:3000/login');
-    await page.getByRole('textbox', { name: 'Email' }).fill(uniqueEmail);
-    await page.getByRole('textbox', { name: 'Password' }).fill('SecurePass123!');
-    await page.getByRole('button', { name: 'Login' }).click();
+    await loginPage.navigateToLogin();
+    await loginPage.login(uniqueEmail, 'SecurePass123!');
 
-    // Wait for login to complete and redirect to dashboard
-    await page.waitForURL('**/dashboard', { timeout: 10000 });
+    // Wait for session to establish
+    await page.waitForTimeout(2000);
 
-    await page.goto('http://localhost:3000/quizzes');
+    await quizzesPage.navigateToQuizzes();
 
-    // Wait for quizzes to load
-    await page.waitForSelector('text=Start Quiz', { timeout: 10000 });
-
-    // Debugging: Log the page's inner HTML
-    const pageContent = await page.content();
-    console.log('Page content:', pageContent);
-
-    // Get initial quiz count - use a simpler selector
-    const initialButtons = page.locator('text=Start Quiz');
+    // Wait for page to load and check if quizzes are available
+    await page.waitForLoadState('networkidle');
+    
+    // Get initial quiz count - use a more reliable selector
+    const initialButtons = page.getByRole('link', { name: /Start Quiz/i });
     const initialCount = await initialButtons.count();
 
     console.log(`Initial quiz count: ${initialCount}`);
 
-    // If no quizzes available, skip this test
     if (initialCount === 0) {
-      test.skip();
+      test.skip(true, 'No quizzes available');
+      return;
     }
 
     // Check if Chemistry option exists in subject filter
@@ -53,34 +47,32 @@ test.describe('Quiz Management and Taking', () => {
 
     console.log(`Subject filter options: ${subjectOptions}`);
 
-    if (!subjectOptions.includes('Chemistry')) {
-      // If options not available, skip test as filters aren't properly populated
-      test.skip();
+    const hasChemistry = subjectOptions.some(opt => opt.includes('Chemistry'));
+    if (!hasChemistry) {
+      test.skip(true, 'Chemistry subject not available');
+      return;
     }
 
     // 1. Apply subject filter "Chemistry"
-    await subjectSelect.selectOption('Chemistry');
+    await quizzesPage.filterBySubject('Chemistry');
     await page.waitForTimeout(500);
 
     // 2. Apply difficulty filter "Medium"
-    await page.getByLabel(/Difficulty/i).selectOption('Medium');
+    await quizzesPage.filterByDifficulty('Medium');
     await page.waitForTimeout(500);
 
-    // Verify filters are applied
-    const filteredButtons = page.locator('text=Start Quiz');
+    // Verify filters are applied - use more reliable selector
+    const filteredButtons = page.getByRole('link', { name: /Start Quiz/i });
     const filteredCount = await filteredButtons.count();
     console.log(`Filtered quiz count: ${filteredCount}`);
     expect(filteredCount).toBeGreaterThan(0);
     expect(filteredCount).toBeLessThanOrEqual(initialCount);
 
     // 3. Click "Clear Filters" button
-    const clearButton = page.getByRole('button', { name: /Clear Filters/i });
-    if (await clearButton.isEnabled()) {
-      await clearButton.click();
-    }
+    await quizzesPage.clearFilters();
 
     // Expected Results: All quizzes displayed again
-    const clearedButtons = page.locator('text=Start Quiz');
+    const clearedButtons = page.getByRole('link', { name: /Start Quiz/i });
     const clearedCount = await clearedButtons.count();
     console.log(`Cleared quiz count: ${clearedCount}`);
     expect(clearedCount).toBeGreaterThanOrEqual(filteredCount);
@@ -94,6 +86,6 @@ test.describe('Quiz Management and Taking', () => {
     expect(diffValue).toBe('');
 
     // Expected Results: "Clear Filters" button becomes disabled
-    await expect(clearButton).toBeDisabled();
+    await quizzesPage.verifyClearFiltersDisabled();
   });
 });

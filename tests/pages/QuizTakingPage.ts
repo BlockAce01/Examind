@@ -13,14 +13,14 @@ export class QuizTakingPage extends BasePage {
 
   constructor(page: Page) {
     super(page);
-    this.quizTitle = page.locator('[data-testid="quiz-title"]');
+    this.quizTitle = page.locator('h1.mb-2');
     this.timer = page.locator('[data-testid="quiz-timer"]').or(page.getByText(/Time Left:/i));
     this.questionCounter = page.locator('[data-testid="question-counter"]').or(page.getByText(/Question \d+ of \d+/i));
-    this.questionText = page.locator('[data-testid="question-text"]');
-    this.answerOptions = page.locator('[data-testid="answer-option"]');
+    this.questionText = page.locator('p.mb-5');
+    this.answerOptions = page.locator('div.space-y-3 button');
     this.previousButton = page.getByRole('button', { name: /Previous/i });
     this.nextButton = page.getByRole('button', { name: /Next/i });
-    this.submitButton = page.getByRole('button', { name: /Submit/i });
+    this.submitButton = page.getByRole('button', { name: /Submit|Finish/i });
   }
 
   async verifyOnQuizPage(quizId?: string) {
@@ -61,7 +61,7 @@ export class QuizTakingPage extends BasePage {
   }
 
   async selectAnswerByText(answerText: string) {
-    await this.page.locator('[data-testid="answer-option"]').filter({ hasText: answerText }).click();
+    await this.page.locator('div.space-y-3 button').filter({ hasText: answerText }).click();
   }
 
   async clickNext() {

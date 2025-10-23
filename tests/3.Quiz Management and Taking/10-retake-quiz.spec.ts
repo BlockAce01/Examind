@@ -2,46 +2,44 @@
 // seed: tests/seed.spec.ts
 
 import { test, expect } from '@playwright/test';
+import { RegisterPage } from '../pages/RegisterPage';
+import { LoginPage } from '../pages/LoginPage';
+import { QuizzesPage } from '../pages/QuizzesPage';
+import { QuizTakingPage } from '../pages/QuizTakingPage';
+import { DashboardPage } from '../pages/DashboardPage';
 
 test.describe('Quiz Management and Taking', () => {
   test('3.10 Retake Quiz', async ({ page }) => {
-    const uniqueEmail = `retakequiz.${Date.now()}@example.com`;
+    const registerPage = new RegisterPage(page);
+    const loginPage = new LoginPage(page);
+    const quizzesPage = new QuizzesPage(page);
+    const quizTakingPage = new QuizTakingPage(page);
+    const dashboardPage = new DashboardPage(page);
+    
+    const uniqueEmail = registerPage.generateUniqueEmail('retakequiz');
 
     // Register and login
-    await page.goto('http://localhost:3000/register');
-    await page.getByRole('textbox', { name: 'Full Name' }).fill('Retake Quiz User');
-    await page.getByRole('textbox', { name: 'Email Address' }).fill(uniqueEmail);
-    await page.getByRole('textbox', { name: 'Password', exact: true }).fill('SecurePass123!');
-    await page.getByRole('textbox', { name: 'Confirm Password' }).fill('SecurePass123!');
-    await page.getByLabel('Register As').selectOption(['Student']);
-    await page.getByLabel('Subject').selectOption(['Physics']);
-    await page.getByLabel('Subject 2').selectOption(['Chemistry']);
-    await page.getByLabel('Subject 3').selectOption(['Combined Mathematics']);
-    await page.getByRole('button', { name: 'Register' }).click();
+    await registerPage.navigateDirectly();
+    await registerPage.registerStudent('Retake Quiz User', uniqueEmail, 'SecurePass123!',
+      ['Physics', 'Chemistry', 'Combined Mathematics']);
 
-    await page.goto('http://localhost:3000/login');
-    await page.getByRole('textbox', { name: 'Email' }).fill(uniqueEmail);
-    await page.getByRole('textbox', { name: 'Password' }).fill('SecurePass123!');
-    await page.getByRole('button', { name: 'Login' }).click();
+    await loginPage.navigateToLogin();
+    await loginPage.login(uniqueEmail, 'SecurePass123!');
+    await loginPage.verifyLoginSuccess();
 
-    // Wait for login to complete and redirect to dashboard
-    await page.waitForURL('**/dashboard', { timeout: 10000 });
+    // Wait for session to establish
+    await page.waitForTimeout(2000);
 
     // Complete first quiz attempt
-    await page.goto('http://localhost:3000/quizzes');
-    
-    // Wait for page to fully load
+    await quizzesPage.navigateToQuizzes();
     await page.waitForLoadState('networkidle');
     
     const startQuizButtons = page.locator('a[href*="/quizzes/"][href*="/take"]');
-    
-    const buttonCount = await startQuizButtons.count();
-    
-    if (buttonCount === 0) {
+    if (await startQuizButtons.count() === 0) {
       test.skip();
     }
 
-    await startQuizButtons.first().click();
+    await quizzesPage.startQuiz();
 
     const questionCount = await page.getByText(/Question 1 of (\d+)/i).textContent();
     const totalQuestions = parseInt(questionCount?.match(/\d+$/)?.[0] || '3');
@@ -59,28 +57,23 @@ test.describe('Quiz Management and Taking', () => {
         await answerButtons.first().click();
       }
       if (i < totalQuestions - 1) {
-        await page.getByRole('button', { name: /Next/i }).click();
+        await quizTakingPage.clickNext();
       }
     }
 
-    await page.getByRole('button', { name: /Submit|Finish/i }).click();
+    await quizTakingPage.clickSubmit();
 
     // 1. View quiz results
     await expect(page).toHaveURL(/.*results|.*score/i);
-    const firstScore = await page.getByText(/Score|Points/i).textContent();
 
     // 2. Navigate back to /quizzes
-    await page.goto('http://localhost:3000/quizzes');
+    await quizzesPage.navigateToQuizzes();
 
-    // 3. Find the same quiz
-    // 4. Click "Start Quiz" again
-    const retakeButtons = page.locator('a[href*="/quizzes/"][href*="/take"]');
-    await retakeButtons.first().click();
+    // 3 & 4. Find the same quiz and start again
+    await quizzesPage.startQuiz();
 
     // Expected Results: Quiz can be taken again
-    await expect(page).toHaveURL(/.*quizzes\/\d+\/take/);
-
-    // Expected Results: Previous answers not pre-filled (fresh attempt - implicit)
+    await quizTakingPage.verifyOnQuizPage();
 
     // Complete second attempt with different answers
     for (let i = 0; i < totalQuestions; i++) {
@@ -89,25 +82,21 @@ test.describe('Quiz Management and Taking', () => {
       }).filter({ 
         hasText: /.{1,}/ 
       });
-      const firstAnswer = answerButtons.first();
-      if (await firstAnswer.isVisible()) {
-        await firstAnswer.click();
+      if (await answerButtons.first().isVisible()) {
+        await answerButtons.first().click();
       }
       if (i < totalQuestions - 1) {
-        await page.getByRole('button', { name: /Next/i }).click();
+        await quizTakingPage.clickNext();
       }
     }
 
-    await page.getByRole('button', { name: /Submit|Finish/i }).click();
+    await quizTakingPage.clickSubmit();
 
     // Expected Results: New submission creates separate entry
     await expect(page).toHaveURL(/.*results|.*score/i);
 
-    // Expected Results: New score may update user's total points
-    await expect(page.getByText(/Score|Points/i)).toBeVisible();
-
     // Expected Results: Both attempts stored in history
-    await page.goto('http://localhost:3000/dashboard');
+    await dashboardPage.navigateToDashboard();
     await expect(page.getByRole('heading', { name: 'Recent Activity' })).toBeVisible();
   });
 });

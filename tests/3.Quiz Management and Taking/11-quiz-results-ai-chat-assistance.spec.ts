@@ -2,64 +2,62 @@
 // seed: tests/seed.spec.ts
 
 import { test, expect } from '@playwright/test';
+import { RegisterPage } from '../pages/RegisterPage';
+import { LoginPage } from '../pages/LoginPage';
+import { QuizzesPage } from '../pages/QuizzesPage';
+import { QuizTakingPage } from '../pages/QuizTakingPage';
+import { QuizResultsPage } from '../pages/QuizResultsPage';
 
 test.describe('Quiz Management and Taking', () => {
   test('3.11 Quiz Results - AI Chat Assistance', async ({ page }) => {
-    const uniqueEmail = `aichat.${Date.now()}@example.com`;
+    const registerPage = new RegisterPage(page);
+    const loginPage = new LoginPage(page);
+    const quizzesPage = new QuizzesPage(page);
+    const quizTakingPage = new QuizTakingPage(page);
+    const quizResultsPage = new QuizResultsPage(page);
+    
+    const uniqueEmail = registerPage.generateUniqueEmail('aichat');
 
     // Register and login
-    await page.goto('http://localhost:3000/register');
-    await page.getByRole('textbox', { name: 'Full Name' }).fill('AI Chat User');
-    await page.getByRole('textbox', { name: 'Email Address' }).fill(uniqueEmail);
-    await page.getByRole('textbox', { name: 'Password', exact: true }).fill('SecurePass123!');
-    await page.getByRole('textbox', { name: 'Confirm Password' }).fill('SecurePass123!');
-    await page.getByLabel('Register As').selectOption(['Student']);
-    await page.getByLabel('Subject').selectOption(['Physics']);
-    await page.getByLabel('Subject 2').selectOption(['Chemistry']);
-    await page.getByLabel('Subject 3').selectOption(['Combined Mathematics']);
-    await page.getByRole('button', { name: 'Register' }).click();
+    await registerPage.navigateDirectly();
+    await registerPage.registerStudent('AI Chat User', uniqueEmail, 'SecurePass123!',
+      ['Physics', 'Chemistry', 'Combined Mathematics']);
 
-    await page.goto('http://localhost:3000/login');
-    await page.getByRole('textbox', { name: 'Email' }).fill(uniqueEmail);
-    await page.getByRole('textbox', { name: 'Password' }).fill('SecurePass123!');
-    await page.getByRole('button', { name: 'Login' }).click();
+    await loginPage.navigateToLogin();
+    await loginPage.login(uniqueEmail, 'SecurePass123!');
+    await loginPage.verifyLoginSuccess();
 
-    // Wait for login to complete and redirect to dashboard
-    await page.waitForURL('**/dashboard', { timeout: 10000 });
+    // Wait for session to establish
+    await page.waitForTimeout(2000);
 
     // 1. Complete a quiz
-    await page.goto('http://localhost:3000/quizzes');
-    
-    // Wait for page to fully load
+    await quizzesPage.navigateToQuizzes();
     await page.waitForLoadState('networkidle');
     
     const startQuizButtons = page.locator('a[href*="/quizzes/"][href*="/take"]');
-    const buttonCount = await startQuizButtons.count();
-    
-    if (buttonCount === 0) {
+    if (await startQuizButtons.count() === 0) {
       test.skip();
     }
 
-    await startQuizButtons.first().click();
+    await quizzesPage.startQuiz();
 
     const questionCount = await page.getByText(/Question 1 of (\d+)/i).textContent();
     const totalQuestions = parseInt(questionCount?.match(/\d+$/)?.[0] || '3');
 
     for (let i = 0; i < totalQuestions; i++) {
       const answerButtons = page.getByRole('button').filter({ hasText: /^\d+%$|^[A-Za-z0-9\s\-\.]+$/ });
-      const firstAnswer = answerButtons.first();
-      if (await firstAnswer.isVisible()) {
-        await firstAnswer.click();
+      if (await answerButtons.first().isVisible()) {
+        await answerButtons.first().click();
       }
       if (i < totalQuestions - 1) {
-        await page.getByRole('button', { name: /Next/i }).click();
+        await quizTakingPage.clickNext();
       }
     }
 
-    await page.getByRole('button', { name: /Submit|Finish/i }).click();
+    await quizTakingPage.clickSubmit();
 
     // 2. On results page, look for AI chatbot option
-    await expect(page).toHaveURL(/.*results|.*score/i);
+    await quizResultsPage.verifyOnResultsPage();
 
     // 3. Click to interact with AI chat
     const aiChatButton = page.getByRole('button', { name: /AI|Chat|Help|Ask AI|Get Explanation/i });
@@ -79,7 +77,7 @@ test.describe('Quiz Management and Taking', () => {
       await page.getByRole('button', { name: /Send|Submit/i }).click();
 
       // Expected Results: Chatbot provides explanations
-      await page.waitForTimeout(2000); // Wait for AI response
+      await page.waitForTimeout(2000);
       const chatMessages = page.locator('[data-testid="chat-message"]');
       
       if (await chatMessages.count() > 0) {
@@ -96,7 +94,7 @@ test.describe('Quiz Management and Taking', () => {
     } else {
       // AI Chat feature may not be implemented yet
       console.log('AI Chat feature not found - may not be implemented');
-      await expect(page.getByText('Your Score')).toBeVisible();
+      await quizResultsPage.verifyResultsDisplayed();
     }
   });
 });

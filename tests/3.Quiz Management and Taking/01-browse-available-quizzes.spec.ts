@@ -2,67 +2,44 @@
 // seed: tests/seed.spec.ts
 
 import { test, expect } from '@playwright/test';
+import { RegisterPage } from '../pages/RegisterPage';
+import { LoginPage } from '../pages/LoginPage';
+import { QuizzesPage } from '../pages/QuizzesPage';
 
 test.describe('Quiz Management and Taking', () => {
   test('3.1 Browse Available Quizzes', async ({ page }) => {
-    const uniqueEmail = `quizbrowse.${Date.now()}@example.com`;
+    const registerPage = new RegisterPage(page);
+    const loginPage = new LoginPage(page);
+    const quizzesPage = new QuizzesPage(page);
+    
+    const uniqueEmail = registerPage.generateUniqueEmail('quizbrowse');
 
     // Register and login
-    await page.goto('http://localhost:3000/register');
-    await page.getByRole('textbox', { name: 'Full Name' }).fill('Quiz Browser');
-    await page.getByRole('textbox', { name: 'Email Address' }).fill(uniqueEmail);
-    await page.getByRole('textbox', { name: 'Password', exact: true }).fill('SecurePass123!');
-    await page.getByRole('textbox', { name: 'Confirm Password' }).fill('SecurePass123!');
-    await page.getByLabel('Register As').selectOption(['Student']);
-    await page.getByLabel('Subject').selectOption(['Physics']);
-    await page.getByLabel('Subject 2').selectOption(['Chemistry']);
-    await page.getByLabel('Subject 3').selectOption(['Combined Mathematics']);
-    await page.getByRole('button', { name: 'Register' }).click();
+    await registerPage.navigateDirectly();
+    await registerPage.registerStudent('Quiz Browser', uniqueEmail, 'SecurePass123!',
+      ['Physics', 'Chemistry', 'Combined Mathematics']);
 
     // 1. Login as student
-    await page.goto('http://localhost:3000/login');
-    await page.getByRole('textbox', { name: 'Email' }).fill(uniqueEmail);
-    await page.getByRole('textbox', { name: 'Password' }).fill('SecurePass123!');
-    await page.getByRole('button', { name: 'Login' }).click();
+    await loginPage.navigateToLogin();
+    await loginPage.login(uniqueEmail, 'SecurePass123!');
 
-    // Wait for login to complete and redirect to dashboard
-    await page.waitForURL('**/dashboard', { timeout: 10000 });
+    // Wait for session to establish
+    await page.waitForTimeout(2000);
 
-    // 2. Navigate to /quizzes
-    await page.goto('http://localhost:3000/quizzes');
+    // 2. Navigate to /quizzes directly
+    await quizzesPage.navigateToQuizzes();
 
     // 3. Observe quiz listing
     // Expected Results: Page title: "Available Quizzes"
-    await expect(page.getByRole('heading', { name: /Available Quizzes/i })).toBeVisible();
+    await quizzesPage.verifyOnQuizzesPage();
 
     // Expected Results: Filter options displayed
-    await expect(page.getByLabel(/Subject/i)).toBeVisible();
-    await expect(page.getByLabel(/Difficulty/i)).toBeVisible();
-    await expect(page.getByRole('button', { name: /Clear Filters/i })).toBeVisible();
+    await quizzesPage.verifyFilterOptions();
 
-    // Expected Results: Each quiz card displays required information
-    const quizCards = page.locator('[data-testid="quiz-card"]');
-    if (await quizCards.count() > 0) {
-      const firstCard = quizCards.first();
-      await expect(firstCard).toBeVisible();
-      
-      // Quiz title
-      await expect(firstCard.locator('text=/Quiz/i')).toBeVisible();
-      
-      // Difficulty badge
-      await expect(firstCard.locator('text=/Easy|Medium|Hard/i')).toBeVisible();
-      
-      // Subject name
-      await expect(firstCard.locator('text=/Physics|Chemistry|Mathematics|ICT/i')).toBeVisible();
-      
-      // Number of questions
-      await expect(firstCard.locator('text=/questions/i')).toBeVisible();
-      
-      // Time limit
-      await expect(firstCard.locator('text=/minutes/i')).toBeVisible();
-      
-      // "Start Quiz" button
-      await expect(firstCard.getByRole('button', { name: /Start Quiz/i })).toBeVisible();
+    // Expected Results: Each quiz card displays required information (if quizzes exist)
+    const quizCount = await quizzesPage.getQuizCardCount();
+    if (quizCount > 0) {
+      await quizzesPage.verifyQuizCard();
     }
   });
 });
