@@ -12,15 +12,15 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./backend/config/examindDB-schema.sql:/docker-entrypoint-initdb.d/examindDB-schema.sql
+      - ./backend/config/examindDB-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
     networks:
       - examind-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U postgres -d examind_test_database"]
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   # Backend API
   backend:
@@ -39,8 +39,17 @@ services:
       - examind-network
     restart: unless-stopped
     environment:
-      # Use postgres service name for DB_HOST
       DB_HOST: postgres
+      DB_USER: postgres
+      DB_PASSWORD: paka
+      DB_DATABASE: examind_test_database
+      DB_PORT: 5432
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   # Frontend Application
   frontend:
@@ -53,10 +62,17 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - examind-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   # Playwright Tests
   playwright:
@@ -67,7 +83,8 @@ services:
       - .:/app
       - /app/node_modules
     depends_on:
-      - frontend
+      frontend:
+        condition: service_healthy
     networks:
       - examind-network
     environment:
@@ -78,7 +95,9 @@ services:
       sh -c "
         npm ci &&
         npx playwright install chromium &&
-        sleep 60 &&
+        echo 'Waiting for all services to be ready...' &&
+        sleep 30 &&
+        echo 'Starting Playwright tests...' &&
         npx playwright test --reporter=list
       "
 
