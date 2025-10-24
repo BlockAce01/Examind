@@ -16,6 +16,7 @@ Examind is a full-stack web application designed to provide an interactive and e
   - [Getting Started](#getting-started)
     - [Prerequisites](#prerequisites)
     - [Installation](#installation)
+    - [Docker Setup (Recommended for Testing)](#docker-setup-recommended-for-testing)
     - [Configuration](#configuration)
     - [Running the Application](#running-the-application)
   - [API Endpoints](#api-endpoints)
@@ -54,24 +55,25 @@ Examind is a full-stack web application designed to provide an interactive and e
 
 ### Frontend
 
-- **Framework:** Next.js
-- **UI Library:** React
-- **Styling:** Tailwind CSS
+- **Framework:** Next.js 15.2.4 (with Turbopack)
+- **UI Library:** React 19
+- **Styling:** Tailwind CSS 4
 - **State Management & Forms:** Formik, Yup
-- **Data Visualization:** Chart.js
+- **Data Visualization:** Chart.js, react-chartjs-2
+- **UI Components:** Heroicons React
+- **HTTP Client:** Axios
+- **Date Handling:** date-fns
 
 ### Backend
 
-- **Framework:** Node.js, Express
-- **Database:** PostgreSQL
-- **Authentication:** bcrypt, JSON Web Tokens
-- **Dependencies:**
-  - `bcrypt`: Password hashing
-  - `cors`: Cross-Origin Resource Sharing
-  - `dotenv`: Environment variable management
-  - `express`: Web framework
-  - `jsonwebtoken`: JWT authentication
-  - `pg`: PostgreSQL client
+- **Runtime:** Node.js 18+
+- **Framework:** Express.js 5.1
+- **Database:** PostgreSQL 15
+- **Authentication:** bcrypt, JSON Web Tokens (JWT)
+- **HTTP Client:** Axios
+- **Environment Management:** dotenv
+- **CORS:** Express CORS middleware
+- **Database Client:** pg (node-postgres)
 
 ## Getting Started
 
@@ -101,6 +103,35 @@ Examind is a full-stack web application designed to provide an interactive and e
     npm install
     ```
 
+### Docker Setup (Recommended for Testing)
+
+For a complete development and testing environment using Docker:
+
+```bash
+# Build and start all services
+docker-compose up --build
+
+# The following services will start:
+# - PostgreSQL 15 (postgres:5432)
+# - Backend (http://localhost:8080)
+# - Frontend (http://localhost:3000)
+# - Playwright Tests (runs tests automatically)
+```
+
+**Note**: Docker Compose automatically:
+- Creates the `examind_test_database` database
+- Loads the schema from `backend/config/examindDB-schema.sql`
+- Sets up environment variables for both services
+- Ensures proper service startup order with healthchecks
+
+To stop services:
+```bash
+docker-compose down
+
+# To also remove the database volume (fresh start):
+docker-compose down -v
+```
+
 ### Configuration
 
 1.  **Backend:**
@@ -117,37 +148,56 @@ Examind is a full-stack web application designed to provide an interactive and e
 
 2.  **Database:**
     - Make sure your PostgreSQL server is running.
-    - Create a database named `examindDB`.
-    - Run the schema file `backend/config/examindDB-schema.sql` to create the necessary tables.
+    - Create a database named `examind_test_database` (or `examindDB` for development).
+    - Run the schema file `backend/config/examindDB-schema.sql` to create the necessary tables:
+      ```bash
+      PGPASSWORD=your_password psql -h localhost -U your_user -d your_database -f backend/config/examindDB-schema.sql
+      ```
+
+3.  **Frontend:**
+    - Create a `.env.local` file in the `frontend` directory.
+    - Add the following environment variable:
+      ```
+      NEXT_PUBLIC_API_URL=http://localhost:8080
+      ```
+    - ⚠️ **Important**: The `NEXT_PUBLIC_API_URL` should be **without** the `/api/v1` suffix. The frontend code automatically appends `/api/v1` to all API requests.
 
 ### Running the Application
 
 1.  **Start the backend server:**
     ```bash
     cd backend
-    npm run dev
+    npm start           # Production mode
+    # OR
+    npm run dev        # Development mode with auto-reload (requires nodemon)
     ```
     The backend will be running on `http://localhost:8080`.
 
 2.  **Start the frontend development server:**
     ```bash
     cd frontend
-    npm run dev
+    npm run dev        # Development mode with Turbopack
+    # OR
+    npm start         # Production mode (requires npm run build first)
     ```
     The frontend will be running on `http://localhost:3000`.
 
 ## API Endpoints
 
-The backend provides a RESTful API with the following main endpoints:
+The backend provides a RESTful API with the following main endpoints (all prefixed with `/api/v1`):
 
-- `/api/auth`: User authentication (login, register)
-- `/api/users`: User management
-- `/api/quizzes`: Quiz creation and management
-- `/api/discussions`: Discussion forums
-- `/api/resources`: Resource sharing
-- `/api/badges`: Badge and gamification system
-- `/api/stats`: Application statistics
-- `/api/ai-chat`: AI chatbot functionality
+- `/auth`: User authentication (login, register, logout)
+- `/users`: User management and admin operations
+- `/quizzes`: Quiz creation, management, and taking
+- `/discussions`: Discussion forums and community features
+- `/resources`: Educational resource sharing and management
+- `/badges`: Badge and gamification system
+- `/stats`: Application statistics and analytics
+- `/ai-chat`: AI chatbot functionality and conversational features
+- `/subjects`: Subject management and filtering
+
+**Health Check Endpoint:**
+- `/api/health`: Service health status (no authentication required)
 
 ## Project Structure
 
@@ -155,22 +205,26 @@ The project is organized into two main directories: `frontend` and `backend`.
 
 ### Frontend
 
-The `frontend` directory contains the Next.js application, with the following key folders:
+The `frontend` directory contains the Next.js application, with the following key structure:
 
--   `src/app`: Main application pages and routes
--   `src/components`: Reusable React components
--   `src/lib`: Utility functions and API helpers
--   `src/context`: React context providers
--   `public`: Static assets (images, fonts)
+-   `src/app`: Next.js App Router with pages and layouts
+-   `src/components`: Reusable React components (page objects, UI components)
+-   `src/lib`: Utility functions and API client helpers
+-   `src/context`: React context providers (e.g., AuthContext)
+-   `src/types`: TypeScript type definitions
+-   `src/utils`: Helper functions and utilities
+-   `src/hooks`: Custom React hooks
+-   `public`: Static assets (images, badges, favicons)
 
 ### Backend
 
 The `backend` directory contains the Node.js/Express server, with the following structure:
 
--   `config`: Database configuration and schema
--   `controllers`: Request handlers and business logic
--   `middleware`: Express middleware functions
--   `routes`: API route definitions
+-   `config`: Database configuration, connection pool, and schema (`examindDB-schema.sql`)
+-   `controllers`: Request handlers and business logic for each feature
+-   `middleware`: Express middleware functions (authentication, logging, error handling)
+-   `routes`: API route definitions and endpoint mappings
+-   `server.js`: Main Express application entry point
 
 ## Testing
 
@@ -225,20 +279,43 @@ The `tests/` directory contains comprehensive test suites organized by functiona
 
 ### Test Configuration
 
-- **Framework**: Playwright with TypeScript
-- **Browser**: Chromium (default), with cross-browser support available
-- **Page Objects**: Reusable page classes in `tests/pages/` for maintainable tests
+- **Framework**: Playwright v1.40+ with TypeScript
+- **Browser**: Chromium (headless by default), with cross-browser support available (Firefox, WebKit)
+- **Page Objects**: Reusable page classes in `tests/pages/` for maintainable, DRY tests
 - **Test Data**: Seed data in `tests/seed.spec.ts` for consistent test environments
-- **Parallel Execution**: Tests run in parallel for faster execution
+- **Execution**: Sequential execution (1 worker) for stability; parallel execution available
+- **Reporting**: HTML reports, JSON output, JUnit XML for CI/CD integration
+- **Retry Strategy**: 0 retries locally, 2 retries in CI for flaky test handling
+- **Trace Recording**: Enabled on first retry to debug failures
 
 ### Writing Tests
 
-Tests follow the Page Object Model pattern for better maintainability. Each test file includes:
+Tests follow the **Page Object Model (POM)** pattern for better maintainability and reusability. Each test file includes:
 
-- Clear test descriptions
-- Setup and teardown logic
-- Assertions for expected behavior
-- Error handling for edge cases
+- **Clear test descriptions**: Descriptive test names that explain what is being tested
+- **Page object usage**: Using `tests/pages/` classes to encapsulate UI interaction logic
+- **Setup and teardown logic**: Proper test isolation and cleanup
+- **Assertions**: Clear assertions for expected behavior and outcomes
+- **Error handling**: Comprehensive handling of edge cases and error scenarios
+- **Data generation**: Use of helper methods like `generateUniqueEmail()` for test data
+
+Example test structure:
+```typescript
+test('1.1 Student Registration - Valid Data', async ({ page }) => {
+  const registerPage = new RegisterPage(page);
+  
+  // Setup
+  const uniqueEmail = registerPage.generateUniqueEmail('john.doe');
+  
+  // Act
+  await registerPage.navigateToRegister();
+  await registerPage.registerStudent('John Doe', uniqueEmail, 'SecurePass123!', subjects);
+  
+  // Assert
+  await registerPage.verifySuccessMessage();
+  await registerPage.verifyFormCleared();
+});
+```
 
 ## CI/CD Pipeline
 
