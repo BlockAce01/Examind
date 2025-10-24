@@ -347,3 +347,74 @@ CREATE INDEX IF NOT EXISTS idx_userbadge_userid
     ON public."UserBadge"("UserID");
 CREATE INDEX IF NOT EXISTS idx_userbadge_badgeid
     ON public."UserBadge"("BadgeID");
+
+-- Insert Default Test Admin User
+INSERT INTO public."User" ("Name", "Email", "Password", "Points", "Badges", "SubscriptionStatus", "Role")
+VALUES ('Test Admin', 'testadmin@email.com', '$2b$10$qG42daBHdM39s7Nolpu9X.mTc.EBD5MjdJQB0SICVwWMN.qk91VTa', 0, NULL, 'free', 'admin');
+
+-- Insert Subjects
+INSERT INTO public."Subject" ("SubjectID", "Name", "Description") VALUES
+(1, 'Biology', NULL),
+(2, 'Combined Mathematics', NULL),
+(3, 'Chemistry', NULL),
+(4, 'Physics', NULL),
+(5, 'Agriculture', NULL),
+(6, 'Economics', NULL),
+(7, 'Business Studies', NULL),
+(8, 'Accounting', NULL),
+(9, 'Business Statistics', NULL),
+(10, 'Engineering Technology', NULL),
+(11, 'Bio Systems Technology', NULL),
+(12, 'Science for Technology', NULL),
+(13, 'ICT', NULL),
+(14, 'Christianity', NULL),
+(15, 'Geography', NULL),
+(16, 'Dancing', NULL),
+(17, 'Drama', NULL),
+(18, 'History', NULL),
+(19, 'Logic', NULL),
+(20, 'Political Science', NULL),
+(21, 'Art', NULL),
+(22, 'Media', NULL),
+(23, 'Music', NULL),
+(24, 'Buddhism Civilization', NULL),
+(25, 'Languages', NULL),
+(26, 'English', NULL),
+(27, 'French', NULL),
+(28, 'German', NULL),
+(29, 'Japanese', NULL);
+
+-- Insert Badges
+INSERT INTO public."Badge" ("BadgeID", "Name", "Description", "IconURL", "Tier") VALUES
+(1, 'Quiz Master - Bronze', 'Complete 2 quizzes', 'Badges/Quiz Master - Bronze.png', 'Bronze'),
+(2, 'Quiz Master - Silver', 'Complete 4 quizzes', 'Badges/Quiz Master - Silver.png', 'Silver'),
+(3, 'Quiz Master - Gold', 'Complete 6 quizzes', 'Badges/Quiz Master - Gold.png', 'Gold'),
+(4, 'Point Collector - Bronze', 'Earn 10 points', 'Badges/Point Collector - Bronze.png', 'Bronze'),
+(5, 'Point Collector - Silver', 'Earn 50 points', 'Badges/Point Collector - Silver.png', 'Silver'),
+(6, 'Point Collector - Gold', 'Earn 100 points', 'Badges/Point Collector - Gold.png', 'Gold'),
+(7, 'Discussion Starter - Bronze', 'Start 1 discussion topics', 'Badges/Discussion Starter - Bronze.png', 'Bronze'),
+(8, 'Discussion Starter - Silver', 'Start 5 discussion topics', 'Badges/Discussion Starter - Silver.png', 'Silver'),
+(9, 'Comment Upvoter - Gold', 'Receive 5 upvotes on your comments', 'Badges/Comment Upvoter - Gold.png', 'Gold');
+
+-- Insert Quizzes
+INSERT INTO public."Quiz" ("QuizID", "Title", "Subject", "DifficultyLevel", "TimeLimit") VALUES
+(1, 'ICT MCQ past papers', 'ICT', 'Easy', 1),
+(2, 'Physics MCQ past papers', 'Physics', 'Hard', 5),
+(3, 'Chemistry MCQ past papers', 'Chemistry', 'Medium', 1),
+(4, 'Biology MCQ past papers', 'Biology', 'Medium', 1),
+(95, 'Calculus Basics Quiz', 'Combined Mathematics', 'Medium', 15),
+(96, 'Calculus Basics Quiz', 'Combined Mathematics', 'Medium', 15),
+(97, 'Calculus Basics Quiz', 'Combined Mathematics', 'Medium', 15),
+(98, 'Physics MCQ past papers', 'Physics', 'Medium', 15),
+(99, 'Chemistry Basics Quiz', 'Chemistry', 'Easy', 10),
+(100, 'Combined Mathematics Hard Challenge', 'Combined Mathematics', 'Hard', 20),
+(101, 'Calculus Basics Quiz', 'Combined Mathematics', 'Medium', 15);
+
+-- Insert Questions
+INSERT INTO public."Question" ("QuestionID", "QuizID", "Text", "Options", "CorrectAnswerIndex") VALUES
+(2, 1, 'The address of an instruction was shown as 5A1 in hexadecimal. What is the address in decimal?', ARRAY['41', '1441', '1457', '2641', '23056'], 1),
+(3, 2, 'Two adjacent rooms A and B at same temperature, connected by a closed door are initially at relative humidity (RH) 60% and 90% respectively. The volume of room A is twice that of room B. If the door is kept open for a long time at the same temperature, what would be the final relative humidity of the rooms?', ARRAY['65%', '70%', '75%', '80%', '85%'], 1),
+(4, 2, 'A hot object hung in a room at 30 °C takes 5 min to cool from 60°C to 50°C. What is the time taken by the object to cool further from 44 °C to 36 °C under same conditions?', ARRAY['10 min', '12.5 min', '15 min', '20 min', '125 min'], 0),
+(5, 2, 'A projectile is launched with an initial velocity of 20 m/s at an angle of 30° above the horizontal. Neglecting air resistance, what is the maximum height reached by the projectile?', ARRAY['5.0 m', '10.0 m', '15.0 m', '20.0 m'], 0),
+(6, 3, 'In the reaction where ethanol (CH₃CH₂OH) is oxidized to acetic acid (CH₃COOH) using acidified K₂Cr₂O₇ solution, what is the total number of electrons exchanged in the redox reaction?', ARRAY['6', '8', '10', '12', '14'], 3),
+(7, 4, 'The minerals mainly required for maintaining the acid-base balance in humans, nerve function, and bone formation respectively are:', ARRAY['Mg, Fe, P', 'P, K, Cl', 'Na, K, Cl', 'Cl, Ca, P', 'K,Na,I'], 3);
