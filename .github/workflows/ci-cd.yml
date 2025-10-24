@@ -64,7 +64,7 @@ jobs:
       working-directory: frontend
       run: |
         cat > .env.local << EOF
-        NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
+        NEXT_PUBLIC_API_URL=http://localhost:8080
         EOF
 
     - name: Build frontend
@@ -154,7 +154,7 @@ jobs:
       run: |
         cd frontend
         cat > .env.local << EOF
-        NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
+        NEXT_PUBLIC_API_URL=http://localhost:8080
         EOF
 
     - name: Build frontend
@@ -205,9 +205,22 @@ jobs:
       env:
         BASE_URL: http://localhost:3000
 
+    - name: Display backend logs during tests
+      if: ${{ always() }}
+      run: |
+        echo "=== Backend Request Logs (Last 100 lines) ==="
+        tail -100 backend/backend.log 2>/dev/null || echo "No backend logs found"
+        echo ""
+        echo "=== Frontend Logs (Last 50 lines) ==="
+        tail -50 frontend/frontend.log 2>/dev/null || echo "No frontend logs found"
+        echo ""
+        echo "=== Checking for test artifacts ==="
+        ls -la playwright-report/ 2>/dev/null || echo "playwright-report/ not found"
+        ls -la test-results/ 2>/dev/null || echo "test-results/ not found"
+
     - name: Upload test results
       uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
+      if: ${{ always() }}
       with:
         name: test-results
         path: test-results/
@@ -215,20 +228,11 @@ jobs:
 
     - name: Upload Playwright report
       uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
+      if: ${{ always() }}
       with:
         name: playwright-report
         path: playwright-report/
         retention-days: 30
-
-    - name: Display logs on failure
-      if: ${{ failure() }}
-      run: |
-        echo "=== Backend Logs ==="
-        cat backend/backend.log || echo "No backend logs found"
-        echo ""
-        echo "=== Frontend Logs ==="
-        cat frontend/frontend.log || echo "No frontend logs found"
         
     - name: Cleanup processes
       if: ${{ always() }}
