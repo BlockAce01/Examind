@@ -15,7 +15,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: examind_test
+          POSTGRES_DB: examind_test_database
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -61,7 +61,22 @@ jobs:
 
     - name: Setup database
       run: |
-        PGPASSWORD=postgres psql -h localhost -U postgres -d examind_test -f backend/config/examindDB-schema.sql
+        echo "Loading database schema from backend/config/examindDB-schema.sql..."
+        if PGPASSWORD=postgres psql -h localhost -U postgres -d examind_test_database -f backend/config/examindDB-schema.sql; then
+          echo "✓ Database schema loaded successfully"
+        else
+          echo "✗ Failed to load database schema"
+          exit 1
+        fi
+
+    - name: Verify database setup
+      run: |
+        echo "Verifying database tables and data..."
+        PGPASSWORD=postgres psql -h localhost -U postgres -d examind_test_database -c "SELECT COUNT(*) as user_count FROM \"User\";"
+        PGPASSWORD=postgres psql -h localhost -U postgres -d examind_test_database -c "SELECT COUNT(*) as subject_count FROM \"Subject\";"
+        PGPASSWORD=postgres psql -h localhost -U postgres -d examind_test_database -c "SELECT COUNT(*) as badge_count FROM \"Badge\";"
+        PGPASSWORD=postgres psql -h localhost -U postgres -d examind_test_database -c "SELECT COUNT(*) as quiz_count FROM \"Quiz\";"
+        echo "Database verification complete!"
 
     - name: Create backend environment file
       run: |
@@ -69,7 +84,7 @@ jobs:
         cat > .env << EOF
         DB_USER=postgres
         DB_HOST=localhost
-        DB_DATABASE=examind_test
+        DB_DATABASE=examind_test_database
         DB_PASSWORD=postgres
         DB_PORT=5432
         JWT_SECRET=test_jwt_secret_key_for_ci_cd_pipeline
