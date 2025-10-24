@@ -36,7 +36,7 @@ export class ProfilePage extends BasePage {
   }
 
   async navigateToProfile() {
-    await this.goto('http://localhost:3000/profile');
+    await this.goto('/profile');
   }
 
   async verifyOnProfilePage() {

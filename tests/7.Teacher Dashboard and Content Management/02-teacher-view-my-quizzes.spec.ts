@@ -20,7 +20,7 @@ test.describe('Teacher Dashboard and Content Management', () => {
     );
 
     // 2. Navigate to /teacher/quizzes
-    await page.goto('http://localhost:3000/teacher/quizzes');
+    await page.goto('/teacher/quizzes');
 
     // 3. View quiz management interface
     // Expected Results:

@@ -12,7 +12,7 @@ test.describe('Subject Management', () => {
     await registerPage.selectRole('Teacher');
     await registerPage.registerTeacher('Admin User', registerPage.generateUniqueEmail('admin'), 'AdminPass123!', 'Physics');
     
-    await page.goto('http://localhost:3000/admin/subjects');
+    await page.goto('/admin/subjects');
     await page.waitForTimeout(1000);
     
     const addSubjectButton = page.getByRole('button', { name: /Add Subject|New Subject|\+ Subject/i });

@@ -19,7 +19,7 @@ export class QuizzesPage extends BasePage {
   }
 
   async navigateToQuizzes() {
-    await this.goto('http://localhost:3000/quizzes');
+    await this.goto('/quizzes');
   }
 
   async verifyOnQuizzesPage() {

@@ -19,7 +19,7 @@ test.describe('Edge Cases and Error Handling', () => {
     });
     
     // Attempt to access protected route
-    await page.goto('http://localhost:3000/dashboard');
+    await page.goto('/dashboard');
     await page.waitForTimeout(1000);
     
     // Expected Results: User redirected to login page

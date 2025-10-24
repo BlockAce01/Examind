@@ -12,7 +12,7 @@ test.describe('Subject Management', () => {
     await registerPage.selectRole('Teacher');
     await registerPage.registerTeacher('Test Teacher', registerPage.generateUniqueEmail('teacher'), 'SecurePass123!', 'Physics');
     
-    await page.goto('http://localhost:3000/teacher/quizzes');
+    await page.goto('/teacher/quizzes');
     await page.waitForTimeout(1000);
     
     const createQuizButton = page.getByRole('button', { name: /Create New Quiz/i });

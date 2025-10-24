@@ -14,7 +14,7 @@ test.describe('Teacher Dashboard and Content Management', () => {
     await registerPage.selectRole('Teacher');
     await registerPage.registerTeacher('Test Teacher', teacherEmail, 'SecurePass123!', 'Physics');
 
-    await page.goto('http://localhost:3000/teacher/resources');
+    await page.goto('/teacher/resources');
     
     const uploadButton = page.getByRole('button', { name: /Upload|Add Resource|\+ Resource/i });
     if (await uploadButton.count() > 0) {

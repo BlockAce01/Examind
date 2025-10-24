@@ -27,7 +27,7 @@ test.describe('Teacher Dashboard and Content Management', () => {
     await page.waitForURL('**/teacher');
 
     // 1. Navigate to /teacher/quizzes
-    await page.goto('http://localhost:3000/teacher/quizzes');
+    await page.goto('/teacher/quizzes');
 
     // 2. Click "+ Create New Quiz" button
     const createQuizButton = page.getByRole('button', { name: '+ Add New Quiz' });

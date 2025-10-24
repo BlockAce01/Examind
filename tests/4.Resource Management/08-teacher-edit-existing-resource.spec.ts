@@ -19,7 +19,7 @@ test.describe('Resource Management', () => {
     await loginPage.login(uniqueEmail, 'SecurePass123!');
 
     // 2. Navigate to resources created by this teacher
-    await page.goto('http://localhost:3000/teacher/resources');
+    await page.goto('/teacher/resources');
 
     // 3. Click "Edit" button on a resource
     const editButton = page.getByRole('button', { name: /Edit/i }).first();

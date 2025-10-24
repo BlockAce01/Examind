@@ -20,7 +20,7 @@ test.describe('Resource Management', () => {
     await page.waitForTimeout(1000);
 
     // 2. Find resource created by this teacher
-    await page.goto('http://localhost:3000/teacher/resources');
+    await page.goto('/teacher/resources');
 
     const resourceCount = await page.locator('[data-testid="resource-card"]').count();
 

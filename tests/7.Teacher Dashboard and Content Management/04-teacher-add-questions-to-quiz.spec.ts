@@ -14,7 +14,7 @@ test.describe('Teacher Dashboard and Content Management', () => {
     await registerPage.selectRole('Teacher');
     await registerPage.registerTeacher('Test Teacher', teacherEmail, 'SecurePass123!', 'Combined Mathematics');
 
-    await page.goto('http://localhost:3000/teacher/quizzes');
+    await page.goto('/teacher/quizzes');
     
     // Create quiz first
     const createQuizButton = page.getByRole('button', { name: /Create New Quiz|Add Quiz|\+ Create/i });

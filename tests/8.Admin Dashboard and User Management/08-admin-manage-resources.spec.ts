@@ -13,7 +13,7 @@ test.describe('Admin Dashboard and User Management', () => {
     await registerPage.selectRole('Teacher');
     await registerPage.registerTeacher('Admin User', adminEmail, 'AdminPass123!', 'Physics');
     
-    await page.goto('http://localhost:3000/admin/resources');
+    await page.goto('/admin/resources');
     await page.waitForTimeout(1000);
     
     // Expected Results: Admin can see all resources from all users

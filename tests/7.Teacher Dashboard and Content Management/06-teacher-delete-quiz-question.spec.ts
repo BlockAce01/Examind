@@ -12,7 +12,7 @@ test.describe('Teacher Dashboard and Content Management', () => {
     await registerPage.selectRole('Teacher');
     await registerPage.registerTeacher('Test Teacher', teacherEmail, 'SecurePass123!', 'Physics');
 
-    await page.goto('http://localhost:3000/teacher/quizzes');
+    await page.goto('/teacher/quizzes');
     const editButton = page.getByRole('button', { name: /Edit/i }).first();
     if (await editButton.count() > 0) {
       await editButton.click();

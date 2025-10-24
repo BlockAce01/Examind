@@ -19,7 +19,7 @@ test.describe('Resource Management', () => {
     await loginPage.login(uniqueEmail, 'SecurePass123!');
 
     // 2. Navigate to /teacher/resources or /resources
-    await page.goto('http://localhost:3000/teacher/resources');
+    await page.goto('/teacher/resources');
 
     // 3. Look for "Upload Resource" or "Create Resource" button
     const uploadButton = page.getByRole('button', { name: /Upload Resource|Create Resource|Add Resource/i });

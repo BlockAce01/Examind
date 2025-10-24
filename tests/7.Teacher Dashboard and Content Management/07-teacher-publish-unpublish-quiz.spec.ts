@@ -12,7 +12,7 @@ test.describe('Teacher Dashboard and Content Management', () => {
     await registerPage.selectRole('Teacher');
     await registerPage.registerTeacher('Test Teacher', teacherEmail, 'SecurePass123!', 'Physics');
 
-    await page.goto('http://localhost:3000/teacher/quizzes');
+    await page.goto('/teacher/quizzes');
     
     const publishToggle = page.getByRole('button', { name: /Publish|Active|Status/i }).or(
       page.locator('input[type="checkbox"][aria-label*="Publish"]')

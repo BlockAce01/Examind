@@ -20,7 +20,7 @@ test.describe('Edge Cases and Error Handling', () => {
     await page.waitForURL('**/dashboard');
     
     // Navigate to quiz with non-existent ID
-    await page.goto('http://localhost:3000/quizzes/99999/take');
+    await page.goto('/quizzes/99999/take');
     await page.waitForTimeout(1000);
     
     // Expected Results: 404 error or "Quiz not found" message

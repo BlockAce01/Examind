@@ -13,7 +13,7 @@ test.describe('Admin Dashboard and User Management', () => {
     await registerPage.selectRole('Teacher');
     await registerPage.registerTeacher('Admin User', adminEmail, 'AdminPass123!', 'Physics');
     
-    await page.goto('http://localhost:3000/admin');
+    await page.goto('/admin');
     await page.waitForTimeout(1000);
     
     const exportButton = page.getByRole('button', { name: /Export|Download|Export Data/i });

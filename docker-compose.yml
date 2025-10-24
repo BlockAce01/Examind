@@ -1,6 +1,27 @@
 version: '3.8'
 
 services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: examind-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: paka
+      POSTGRES_DB: examind_test_database
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./backend/config/examindDB-schema.sql:/docker-entrypoint-initdb.d/examindDB-schema.sql
+    networks:
+      - examind-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # Backend API
   backend:
     build:
@@ -11,12 +32,15 @@ services:
       - ./backend/.env
     ports:
       - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - examind-network
     restart: unless-stopped
     environment:
-      # Override DB_HOST to use local machine
-      DB_HOST: host.docker.internal
+      # Use postgres service name for DB_HOST
+      DB_HOST: postgres
 
   # Frontend Application
   frontend:
@@ -33,6 +57,30 @@ services:
     networks:
       - examind-network
     restart: unless-stopped
+
+  # Playwright Tests
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.40.0-jammy
+    container_name: examind-playwright
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - frontend
+    networks:
+      - examind-network
+    environment:
+      BASE_URL: http://frontend:3000
+      NODE_OPTIONS: "--max-old-space-size=2048"
+    mem_limit: "2gb"
+    command: >
+      sh -c "
+        npm ci &&
+        npx playwright install chromium &&
+        sleep 60 &&
+        npx playwright test --reporter=list
+      "
 
 networks:
   examind-network:

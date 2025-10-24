@@ -16,11 +16,11 @@ export class LoginPage extends BasePage {
   }
 
   async navigateToLogin() {
-    await this.goto('http://localhost:3000/login');
+    await this.goto('/login');
   }
 
   async navigateFromHome() {
-    await this.goto('http://localhost:3000');
+    await this.goto('/');
     // Will auto-redirect to login
   }
 

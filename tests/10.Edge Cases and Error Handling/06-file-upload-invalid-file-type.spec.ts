@@ -12,7 +12,7 @@ test.describe('Edge Cases and Error Handling', () => {
     await registerPage.selectRole('Teacher');
     await registerPage.registerTeacher('Test Teacher', registerPage.generateUniqueEmail('teacher'), 'SecurePass123!', 'Physics');
     
-    await page.goto('http://localhost:3000/teacher/resources');
+    await page.goto('/teacher/resources');
     await page.waitForTimeout(1000);
     
     const uploadButton = page.getByRole('button', { name: /Upload|Add Resource/i });

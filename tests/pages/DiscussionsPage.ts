@@ -28,7 +28,7 @@ export class DiscussionsPage extends BasePage {
   }
 
   async navigateToDiscussions() {
-    await this.goto('http://localhost:3000/discussions');
+    await this.goto('/discussions');
   }
 
   async verifyOnDiscussionsPage() {

@@ -9,7 +9,7 @@ test.describe('Resource Management', () => {
     const loginPage = new LoginPage(page);
 
     // Use fixed admin account
-    const adminEmail = 'pakaya@email.com';
+    const adminEmail = 'testadmin@email.com';
     const adminPassword = 'asdasd';
 
     // 1. Login as admin
@@ -19,7 +19,7 @@ test.describe('Resource Management', () => {
     await page.waitForURL('**/admin', { timeout: 10000 });
     
     // 2. Navigate to /admin or admin resources view
-    await page.goto('http://localhost:3000/admin/resources');
+    await page.goto('/admin/resources');
 
     // 3. View all resources from all uploaders
     // Expected Results: Admin can see all resources regardless of uploader

@@ -60,7 +60,7 @@ export class DashboardPage extends BasePage {
   }
 
   async navigateToDashboard() {
-    await this.goto('http://localhost:3000/dashboard');
+    await this.goto('/dashboard');
   }
 
   async verifyOnDashboard() {

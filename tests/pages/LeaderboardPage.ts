@@ -14,7 +14,7 @@ export class LeaderboardPage extends BasePage {
   }
 
   async navigateToLeaderboard() {
-    await this.goto('http://localhost:3000/leaderboard');
+    await this.goto('/leaderboard');
   }
 
   async verifyOnLeaderboardPage() {

@@ -9,7 +9,7 @@ test.describe('Edge Cases and Error Handling', () => {
     // Note: Actual missing env vars would prevent app from starting
     // This test just verifies error handling exists
     
-    await page.goto('http://localhost:3000');
+    await page.goto('');
     await page.waitForTimeout(1000);
     
     // Application should either:

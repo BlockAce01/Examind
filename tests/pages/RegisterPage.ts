@@ -32,12 +32,12 @@ export class RegisterPage extends BasePage {
   }
 
   async navigateToRegister() {
-    await this.goto('http://localhost:3000');
+    await this.goto('/');
     await this.registerLink.click();
   }
 
   async navigateDirectly() {
-    await this.goto('http://localhost:3000/register');
+    await this.goto('/register');
   }
 
   async fillFullName(name: string) {

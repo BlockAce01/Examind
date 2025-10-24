@@ -28,7 +28,7 @@ test.describe('Dashboard and User Profile', () => {
     await page.waitForTimeout(1000);
 
     // 2. Take and complete a quiz
-    await page.goto('http://localhost:3000/quizzes');
+    await page.goto('/quizzes');
     await page.getByRole('link', { name: /Start Quiz/i }).first().click();
     
     // Answer quiz questions
