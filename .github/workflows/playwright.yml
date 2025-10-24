@@ -119,6 +119,12 @@ jobs:
           echo "Attempt $i: Backend not ready yet..."
           sleep 2
         done
+        echo ""
+        echo "=== Backend Startup Logs ==="
+        head -50 backend/backend.log || echo "No backend logs found"
+        echo ""
+        echo "=== Verifying database connectivity ==="
+        PGPASSWORD=postgres psql -h localhost -U postgres -d examind_test_database -c "SELECT 'DB accessible from shell' as status;"
         
     - name: Start frontend server
       working-directory: frontend
